@@ -27,5 +27,14 @@ class SymphonyUt(unittest.TestCase):
 
         slog2.logger.info("Another Log INFO MSG")
 
+    def test_logging_newfile(self):
+        print "Test Logging utility"
+        slog = logger.Logger(name="NEWTEST",
+                             logfile="/tmp/newlog.log")
+        self.failUnless(slog.logger is not None)
+
+        slog.logger.debug("Test logging newfile: DEBUG log")
+
+
 
 
