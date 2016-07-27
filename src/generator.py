@@ -11,6 +11,7 @@ import sys
 import os
 import yaml
 import argparse
+import jinja2
 import utils.symphony_logger as logger
 
 
@@ -19,8 +20,10 @@ class Generator(object):
     Read the user input file. Perform validations
     and provide APIs to access data.
     '''
-    def __init__(self, inputfile):
+    def __init__(self, inputfile, build_dir):
         self.inputfilename = inputfile.name
+        self.build_dir = build_dir
+
         self.slog = logger.Logger(name="Generator")
         self.parsed_input = self.__parse_userinput(inputfile)
         if self.parsed_input is None:
@@ -31,7 +34,7 @@ class Generator(object):
                                   self.inputfilename)
 
     def __is_valid_userinput(self, parsed_data):
-        required_valid_keys = ['services', 'cloud_env', 'name']
+        required_valid_keys = ['services', 'cloud', 'name']
 
         # Check for valid required keys in input file
         for validkey in required_valid_keys:
@@ -41,7 +44,6 @@ class Generator(object):
                 return False
 
         return True
-
 
     def __parse_userinput(self, inputfile):
         try:
@@ -56,6 +58,28 @@ class Generator(object):
             return None
 
         return parsed_data
+
+    def render_templates(self, searchpath, templatefile, obj):
+        '''
+        Read and render jinja2 templates. Returns a rendered
+        text
+        '''
+        template_loader = jinja2.FileSystemLoader(searchpath=searchpath)
+        env = jinja2.Environment(loader=template_loader,
+                                 trim_blocks=False,
+                                 lstrip_blocks=False)
+        template = env.get_template(templatefile)
+        data = template.render(obj)
+
+        print "Rendered data: ", data
+        return data
+
+    def setup_environment_directory(self):
+        print "Setup env dir"
+
+    def generate_environment(self):
+        print "Generate Environment"
+        self.setup_environment_directory()
 
 
 class GeneratorCli(object):
@@ -120,8 +144,18 @@ class GeneratorCli(object):
 
 def main():
     gencli = GeneratorCli(sys.argv)
+    try:
+        generator = Generator(gencli.namespace.input,
+                              gencli.namespace.build_dir)
+    except AttributeError as attrerr:
+        print "Invalid Namespace [%s] " % attrerr
+        sys.exit()
 
-    generator = Generator(gencli.namespace.input)
+    if generator.parsed_input is None:
+        sys.exit()
+
+    generator.generate_environment()
+
 
 
 
