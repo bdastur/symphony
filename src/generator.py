@@ -120,6 +120,20 @@ class Generator(object):
                             self.parsed_input['cloud']['type'].lower(),
                             "keypair")
 
+        if self.parsed_input.get('sg_core_module_source', None) is None:
+            self.parsed_input['sg_core_module_source'] = \
+               os.path.join(template_root,
+                            "tfmodules",
+                            self.parsed_input['cloud']['type'].lower(),
+                            "securitygroup", "core")
+
+        if self.parsed_input.get('sg_http_module_source', None) is None:
+            self.parsed_input['sg_http_module_source'] = \
+               os.path.join(template_root,
+                            "tfmodules",
+                            self.parsed_input['cloud']['type'].lower(),
+                            "securitygroup", "http")
+
         rendered_str = self.render_template_inline(template_str,
                                                    self.parsed_input)
         print "Rendered: ", rendered_str

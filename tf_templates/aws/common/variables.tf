@@ -22,3 +22,32 @@ variable "public_key" {
     description = "SSH Public Key"
 }
 
+
+#------------------------------------
+# Security Group
+variable "sg_name" {
+    description = "Security Group Name"
+}
+
+variable "sg_description" {
+    descripton = "Security Group Description"
+}
+
+variable "sg_cidr_blocks" {
+    default = "0.0.0.0/0"
+}
+
+#------------------------------------
+# VPC:
+
+variable "vpc_id" {
+    description = "AWS VPC Id"
+}
+
+#------------------------------------
+# Identification Tags
+
+variable "tag_name" {
+    description = "Name of the instance in this case"
+}
+
