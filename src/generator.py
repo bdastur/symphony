@@ -9,6 +9,7 @@ and builds the app environment.
 
 import sys
 import os
+import shutil
 import yaml
 import argparse
 import jinja2
@@ -20,9 +21,8 @@ class Generator(object):
     Read the user input file. Perform validations
     and provide APIs to access data.
     '''
-    def __init__(self, inputfile, build_dir):
+    def __init__(self, inputfile):
         self.inputfilename = inputfile.name
-        self.build_dir = build_dir
 
         self.slog = logger.Logger(name="Generator")
         self.parsed_input = self.__parse_userinput(inputfile)
@@ -34,7 +34,7 @@ class Generator(object):
                                   self.inputfilename)
 
     def __is_valid_userinput(self, parsed_data):
-        required_valid_keys = ['services', 'cloud', 'name']
+        required_valid_keys = ['template_root', 'cloud', 'working_dir']
 
         # Check for valid required keys in input file
         for validkey in required_valid_keys:
@@ -74,8 +74,136 @@ class Generator(object):
         print "Rendered data: ", data
         return data
 
+    def render_template_inline(self, template_str, data):
+        '''
+        Read the template string and return the rendered output
+        '''
+        if template_str is None or len(template_str) == 0:
+            self.slog.logger.error("Invalid template string")
+            return None
+
+        if data is None or len(data) == 0:
+            self.slog.logger.error("Render data cannot be empty")
+            return None
+
+        try:
+            template = jinja2.Template(template_str,
+                                       trim_blocks=True,
+                                       lstrip_blocks=True)
+            rendered_str = template.render(data)
+        except jinja2.exceptions.TemplateSyntaxError as j2error:
+            self.slog.logger.error("J2 Error: [%s]", j2error)
+            return None
+
+        return rendered_str
+
+    def render_terraform_file(self, tf_src, tf_dst):
+        '''
+        Read the source  file, and copy rendred data to dst.
+        '''
+        template_root = self.parsed_input['template_root']
+        # Render environment.txt.
+        try:
+            fp = open(tf_src)
+            template_str = fp.read()
+        except IOError as ioerr:
+            self.slog.logger.error("IOError: [%s]", ioerr)
+            sys.exit()
+
+        fp.close()
+
+        # Prefill some variables.
+        if self.parsed_input.get('keypair_module_source', None) is None:
+            self.parsed_input['keypair_module_source'] = \
+               os.path.join(template_root,
+                            "tfmodules",
+                            self.parsed_input['cloud']['type'].lower(),
+                            "keypair")
+
+        rendered_str = self.render_template_inline(template_str,
+                                                   self.parsed_input)
+        print "Rendered: ", rendered_str
+        try:
+            fp = open(tf_dst, 'w')
+            fp.write(rendered_str)
+        except IOError as ioerr:
+            self.slog.logger.error("IOError writing rendered str [%s]",
+                                   ioerr)
+            sys.exit()
+
     def setup_environment_directory(self):
         print "Setup env dir"
+        template_root = self.parsed_input['template_root']
+        working_dir = self.parsed_input['working_dir']
+        print "Root: ", self.parsed_input['template_root']
+        print "working dir: ", self.parsed_input['working_dir']
+        if not os.path.exists(template_root):
+            self.slog.logger.error("[%s] template_root does not exist",
+                                   template_root)
+            sys.exit()
+
+        if not os.path.exists(working_dir):
+            self.slog.logger.error("[%s] working_dir does not exist",
+                                   working_dir)
+            sys.exit()
+
+        print self.parsed_input['cloud']['type'].lower()
+        template_dir = os.path.join(template_root,
+                                    "tf_templates",
+                                    self.parsed_input['cloud']['type'].lower(),
+                                    self.parsed_input['template_name'])
+
+        if not os.path.exists(template_dir):
+            self.slog.logger.error("[%s] template_dir path does not exist",
+                                   template_dir)
+            sys.exit()
+        print "Template dir %s exists" % template_dir
+
+        tf_common_dir = os.path.join(template_root,
+                                     "tf_templates",
+                                     self.parsed_input['cloud']['type'].lower(),
+                                     "common")
+        if not os.path.exists(tf_common_dir):
+            self.slog.logger.error("[%s] template common dir does not exist",
+                                   tf_common_dir)
+            sys.exit()
+
+        env_root = os.path.join(working_dir,
+                                "environments")
+
+        if not os.path.exists(env_root):
+            os.mkdir(env_root)
+
+        env_dir = os.path.join(env_root,
+                               self.parsed_input['env_name'])
+
+        if not os.path.exists(env_dir):
+            os.mkdir(env_dir)
+
+        # Copy the necessary files to working dir.
+        main_src = os.path.join(template_dir, "main.tf")
+        variables_src = os.path.join(tf_common_dir, "variables.tf")
+        outputs_src = os.path.join(template_dir, "outputs.tf")
+        environment_src = os.path.join(tf_common_dir, "environment.txt")
+
+        main_dst = os.path.join(env_dir, "main.tf")
+        variables_dst = os.path.join(env_dir, "variables.tf")
+        outputs_dst = os.path.join(env_dir, "outputs.tf")
+        environment_dst = os.path.join(env_dir, "environment.txt")
+
+        print "main: ", main_dst
+        try:
+            #shutil.copyfile(main_src, main_dst)
+            shutil.copyfile(variables_src, variables_dst)
+            shutil.copyfile(outputs_src, outputs_dst)
+        except IOError as ioerr:
+            self.slog.logger.error("IOError: [%s]", ioerr)
+            sys.exit()
+
+        self.render_terraform_file(environment_src,
+                                   environment_dst)
+        self.render_terraform_file(main_src,
+                                   main_dst)
 
     def generate_environment(self):
         print "Generate Environment"
@@ -84,16 +212,7 @@ class Generator(object):
 
 class GeneratorCli(object):
     def __init__(self, args):
-        slog = logger.Logger(name="GeneratorCLI")
         self.namespace = self.__build_parser(args)
-        if self.namespace.operation == "build":
-            # Check if the path to build dir is valid.
-            if not os.path.exists(self.namespace.build_dir):
-                slog.logger.error("Build Dir %s not valid",
-                                  self.namespace.build_dir)
-                return
-        elif self.namespace.operation is None:
-            print "No operation"
 
     def __build_parser(self, args):
         operation = None
@@ -112,9 +231,6 @@ class GeneratorCli(object):
                 formatter_class=argparse.RawTextHelpFormatter,
                 description="Symphony Generator - Build Environment")
 
-            parser.add_argument("--build_dir",
-                                required=True,
-                                help="Build Directory")
             parser.add_argument("--input",
                                 required=True,
                                 type=open,
@@ -145,8 +261,7 @@ class GeneratorCli(object):
 def main():
     gencli = GeneratorCli(sys.argv)
     try:
-        generator = Generator(gencli.namespace.input,
-                              gencli.namespace.build_dir)
+        generator = Generator(gencli.namespace.input)
     except AttributeError as attrerr:
         print "Invalid Namespace [%s] " % attrerr
         sys.exit()

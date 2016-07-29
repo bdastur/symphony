@@ -1,0 +1,37 @@
+######################################
+# AWS Environment specific variables.
+######################################
+
+# AWS Cloud Parameters
+aws_profile = "{{ aws_profile }}"
+aws_credentials_file = "{{ aws_credentials_file }}"
+region = "{{ region }}"
+
+key_name = "{{ key_name }}"
+public_key = "{{ public_key }}" 
+
+# VPC ID:
+vpc_id = "{{ vpc_id }}"
+subnet_id = "{{ subnet_id }}"
+
+# Security Group Variables.
+sg_name = "{{ sg_name }}"
+sg_description = "{{ sg_description }}"
+
+# EC2 Variables
+instance_type = "{{ instance_type }}"
+ami = "{{ ami }}"
+availability_zone = "{{ availability_zone }}"
+instance_monitoring = "{{ instance_monitoring}}"
+vpc_security_group_ids = "{{ vpc_security_group_ids }}"
+
+root_ebs_type = "{{ root_ebs_type }}"
+root_ebs_size = "{{ root_ebs_size }}"
+root_ebs_delete_on_termination = "{{ root_ebs_delete_on_termination }}"
+cloud_config_file = "{{ cloud_config_file }}"
+
+ssl_certificate_id = "{{ ssl_certificate_id }}"
+
+# Application Identification tags.
+tag_name = "{{ tag_name }}"
+
