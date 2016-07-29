@@ -37,6 +37,26 @@ module "http_sg" {
     tag_name = "${var.tag_name}"
 }
 
+#------------------------------------
+# EC2 Instance.
+
+module "ec2_instance" {
+    source = "{{ ec2_instance_module_source }}"
+
+    ami = "${var.ami}"
+    instance_type = "${var.instance_type}"
+    vpc_id = "${var.vpc_id}"
+    key_name = "${var.key_name}"
+    availability_zone = "${var.availability_zone}"
+    instance_monitoring = "${var.instance_monitoring}"
+    vpc_security_group_ids = "${module.core_sg.core_sg_id}"
+    subnet_id = "${var.subnet_id}"
+    cloud_config_file = "${var.cloud_config_file}"
+
+    tag_name = "${var.tag_name}"
+
+}
+
 
 
 
