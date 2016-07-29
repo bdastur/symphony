@@ -134,6 +134,16 @@ class Generator(object):
                             self.parsed_input['cloud']['type'].lower(),
                             "securitygroup", "http")
 
+        if self.parsed_input.get('ec2_instance_module_source', None) is None:
+            self.parsed_input['ec2_instance_module_source'] = \
+               os.path.join(template_root,
+                            "tfmodules",
+                            self.parsed_input['cloud']['type'].lower(),
+                            "instance", "basic")
+
+        if self.parsed_input.get('cloud_config_file', None) is None:
+            self.parsed_input['cloud_config_file'] = "./cloud_config.sh"
+
         rendered_str = self.render_template_inline(template_str,
                                                    self.parsed_input)
         print "Rendered: ", rendered_str
@@ -199,17 +209,20 @@ class Generator(object):
         variables_src = os.path.join(tf_common_dir, "variables.tf")
         outputs_src = os.path.join(template_dir, "outputs.tf")
         environment_src = os.path.join(tf_common_dir, "environment.txt")
+        cloudconfig_src = os.path.join(template_dir, "cloud_config.sh")
 
         main_dst = os.path.join(env_dir, "main.tf")
         variables_dst = os.path.join(env_dir, "variables.tf")
         outputs_dst = os.path.join(env_dir, "outputs.tf")
         environment_dst = os.path.join(env_dir, "environment.txt")
+        cloudconfig_dst = os.path.join(env_dir, "cloud_config.sh")
 
         print "main: ", main_dst
         try:
             #shutil.copyfile(main_src, main_dst)
             shutil.copyfile(variables_src, variables_dst)
             shutil.copyfile(outputs_src, outputs_dst)
+            shutil.copy(cloudconfig_src, cloudconfig_dst)
         except IOError as ioerr:
             self.slog.logger.error("IOError: [%s]", ioerr)
             sys.exit()
