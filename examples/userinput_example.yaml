@@ -1,0 +1,60 @@
+---
+
+######################################################
+# User Definition File:
+# ----------------------
+# Define your environment specific parameters in this file
+######################################################
+
+
+cloud:
+  # Here the type should be any public cloud like "AWS", or "openstack"
+  # NOTE: First version only AWS support.
+  type: "AWS"
+
+template_root: "<PATH TO THIS GIT REPO. eg: /home/root//symphonyws/symphony>"
+template_name: "<NAME OF TEMPLATE: can be found under tf_templates/aws/. eg: basic_instance"
+working_dir: "<PATH TO THE WORKING DIRECTORY WHERE Terraform templates will get rendered and terraform plan apply will run>"
+env_name: "<NAME OF THE DIRECTORY TO BE CREATED UNDER WORKING DIRECTORY>"
+
+aws_profile: "<AWS PROFILE NAME>"
+aws_credentials_file: "<PATH TO THE AWS credentials FILE>"
+region: "<AWS REGION. eg:us-east-1|us-west-2>"
+
+key_name: "<AWS KEYNAME>"
+public_key: "<PATH TO THE PUBLIC KEY>"
+
+vpc_id: "<AWS VPC ID>"
+subnet_id: "<AWS SUBNET ID>"
+
+sg_name: "<SECURITY GROUP NAME>"
+sg_description: "<SECURITY GROUP DESCRIPTION>"
+
+instance_type: "<INSTANCE TYPE. eg:t2.micro>"
+ami: "<AMI ID>"
+availability_zone: "<AWS AVAILABILITY ZONE. eg:us-east-1b>"
+instance_monitoring: "<BOOLEAN FLAG true|false>"
+vpc_security_group_ids: "<VPC SECURITY GROUP IDS>"
+
+root_ebs_type: "<ROOT EBS VOLUME TYPE. eg:standard>"
+root_ebs_size: "<ROOT EBS VOLUME SIZE. eg: 20>"
+root_ebs_delete_on_termination: "<BOOLEAN FLAG true|false>"
+cloud_config_file: "<PATH TO CLOUD CONFIG FILE>"
+
+ssl_certificate_id: "<SSL CERTIFICATE ID. From aws iam list-server-certificates|grep yourcertname>" 
+
+# Application Identification tags.
+tag_name: "<DEFINE YOUR TAG NAME>"
+
+
+#################################################
+# Section defines the provisioning steps to take
+# on the newly created environment.
+#################################################
+provision:
+    - common
+    - consul
+
+
+...
+
