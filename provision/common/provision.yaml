@@ -1,0 +1,6 @@
+- name: Common tasks.
+  hosts: "{{ hosts }}"
+  user: "{{ username }}"
+  tasks:
+    - name: check connectivity.
+      ping:
