@@ -14,6 +14,7 @@ import json
 import yaml
 import argparse
 import prettytable
+import subprocess
 import jinja2
 import utils.symphony_logger as logger
 
@@ -159,23 +160,7 @@ class Generator(object):
                                    ioerr)
             sys.exit()
 
-    def setup_environment_directory(self):
-        print "Setup env dir"
-        template_root = self.parsed_input['template_root']
-        working_dir = self.parsed_input['working_dir']
-        print "Root: ", self.parsed_input['template_root']
-        print "working dir: ", self.parsed_input['working_dir']
-        if not os.path.exists(template_root):
-            self.slog.logger.error("[%s] template_root does not exist",
-                                   template_root)
-            sys.exit()
-
-        if not os.path.exists(working_dir):
-            self.slog.logger.error("[%s] working_dir does not exist",
-                                   working_dir)
-            sys.exit()
-
-        print self.parsed_input['cloud']['type'].lower()
+    def setup_environment_directory(self, template_root, working_dir):
         template_dir = os.path.join(template_root,
                                     "tf_templates",
                                     self.parsed_input['cloud']['type'].lower(),
@@ -223,7 +208,6 @@ class Generator(object):
 
         print "main: ", main_dst
         try:
-            #shutil.copyfile(main_src, main_dst)
             shutil.copyfile(variables_src, variables_dst)
             shutil.copyfile(outputs_src, outputs_dst)
             shutil.copy(cloudconfig_src, cloudconfig_dst)
@@ -236,9 +220,82 @@ class Generator(object):
         self.render_terraform_file(main_src,
                                    main_dst)
 
+    def run_terraform_commands(self, working_dir):
+        '''
+        Execute the terraform commands to build and generate the environment
+        '''
+        print "Run terraform commands"
+        env_root = os.path.join(working_dir,
+                                "environments")
+        if not os.path.exists(env_root):
+            sys.exit()
+
+        env_dir = os.path.join(env_root,
+                               self.parsed_input['env_name'])
+        if not os.path.exists(env_dir):
+            sys.exit()
+
+        env_file = os.path.join(env_dir, "environment.txt")
+        if not os.path.exists(env_file):
+            sys.exit()
+
+        # Terraform get all modules.
+        tf_get_cmd = ["terraform", "get"]
+
+        sproc = subprocess.Popen(tf_get_cmd,
+                                 cwd=env_dir,
+                                 stdout=subprocess.PIPE)
+        while True:
+            nextline = sproc.stdout.readline()
+            if nextline == "" and sproc.poll() is not None:
+                break
+
+            sys.stdout.write(nextline)
+            sys.stdout.flush()
+
+        # Terraform plan.
+        tf_plan_cmd = ["terraform", "plan", "-var-file", env_file]
+        sproc = subprocess.Popen(tf_plan_cmd,
+                                 cwd=env_dir,
+                                 stdout=subprocess.PIPE)
+        while True:
+            nextline = sproc.stdout.readline()
+            if nextline == "" and sproc.poll() is not None:
+                break
+
+            sys.stdout.write(nextline)
+            sys.stdout.flush()
+
+        # Terraform apply
+        tf_apply_cmd = ["terraform", "apply", "-var-file", env_file]
+        sproc = subprocess.Popen(tf_apply_cmd,
+                                 cwd=env_dir,
+                                 stdout=subprocess.PIPE)
+        while True:
+            nextline = sproc.stdout.readline()
+            if nextline == "" and sproc.poll() is not None:
+                break
+
+            sys.stdout.write(nextline)
+            sys.stdout.flush()
+
     def generate_environment(self):
         print "Generate Environment"
-        self.setup_environment_directory()
+        template_root = self.parsed_input['template_root']
+        working_dir = self.parsed_input['working_dir']
+
+        if not os.path.exists(template_root):
+            self.slog.logger.error("[%s] template_root does not exist",
+                                   template_root)
+            sys.exit()
+
+        if not os.path.exists(working_dir):
+            self.slog.logger.error("[%s] working_dir does not exist",
+                                   working_dir)
+            sys.exit()
+
+        self.setup_environment_directory(template_root, working_dir)
+        self.run_terraform_commands(working_dir)
 
     def list_environments(self, envdir):
         '''
