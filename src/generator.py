@@ -21,17 +21,17 @@ class Generator(object):
     Read the user input file. Perform validations
     and provide APIs to access data.
     '''
-    def __init__(self, inputfile):
-        self.inputfilename = inputfile.name
-
+    def __init__(self, namespace):
         self.slog = logger.Logger(name="Generator")
-        self.parsed_input = self.__parse_userinput(inputfile)
-        if self.parsed_input is None:
-            self.slog.logger.error("Parsing Failed for %s",
-                                   self.inputfilename)
-        else:
-            self.slog.logger.info("Parsed %s successfull",
-                                  self.inputfilename)
+        if namespace.operation == "build":
+            self.inputfilename = namespace.input.name
+            self.parsed_input = self.__parse_userinput(namespace.input)
+            if self.parsed_input is None:
+                self.slog.logger.error("Parsing Failed for %s",
+                                       self.inputfilename)
+            else:
+                self.slog.logger.info("Parsed %s successfull",
+                                      self.inputfilename)
 
     def __is_valid_userinput(self, parsed_data):
         required_valid_keys = ['template_root', 'cloud', 'working_dir']
@@ -262,6 +262,19 @@ class GeneratorCli(object):
                                 required=True,
                                 type=open,
                                 help="User input file (yaml format)")
+        elif args[1] == "list":
+            sys.argv.pop(1)
+            # List environments.
+            operation = "listenv"
+            parser = argparse.ArgumentParser(
+                prog="generator",
+                formatter_class=argparse.RawTextHelpFormatter,
+                description="Sympthon Generator - Build Environment")
+
+            parser.add_argument("--envdir",
+                                required=True,
+                                help="Root directory to all tf state files")
+
         else:
             operation = None
             parser = argparse.ArgumentParser(
@@ -281,16 +294,16 @@ class GeneratorCli(object):
         print "Operation Types:"
         print "-----------------"
         print "build"
+        print "list"
         print ""
-
 
 
 def main():
     gencli = GeneratorCli(sys.argv)
     try:
-        generator = Generator(gencli.namespace.input)
+        generator = Generator(gencli.namespace)
     except AttributeError as attrerr:
-        print "Invalid Namespace [%s] " % attrerr
+        print "Namespace [%s] " % attrerr
         sys.exit()
 
     if generator.parsed_input is None:
