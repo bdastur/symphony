@@ -10,8 +10,10 @@ and builds the app environment.
 import sys
 import os
 import shutil
+import json
 import yaml
 import argparse
+import prettytable
 import jinja2
 import utils.symphony_logger as logger
 
@@ -32,6 +34,8 @@ class Generator(object):
             else:
                 self.slog.logger.info("Parsed %s successfull",
                                       self.inputfilename)
+        elif namespace.operation == "listenv":
+            self.list_environments(namespace.envdir)
 
     def __is_valid_userinput(self, parsed_data):
         required_valid_keys = ['template_root', 'cloud', 'working_dir']
@@ -236,6 +240,57 @@ class Generator(object):
         print "Generate Environment"
         self.setup_environment_directory()
 
+    def list_environments(self, envdir):
+        '''
+        List environments
+        '''
+        self.slog.logger.debug("List Environments root: %s", envdir)
+
+        # Get a list of all the terraform state files.
+        if not os.path.exists(envdir):
+            self.slog.logger.error("Invalid envdir %s", envdir)
+            return
+
+        envobj = {}
+        for dirpath, dirs, files in os.walk(envdir):
+            dirname = os.path.basename(dirpath)
+            if dirname == "" or dirname == ".terraform":
+                continue
+
+            if "terraform.tfstate" in files:
+                envobj[dirname] = {}
+                envobj[dirname]['filepath'] = os.path.join(dirpath,
+                                                           "terraform.tfstate")
+
+            self.slog.logger.debug("Dirpath: %s, Dirs: %s, Files: %s",
+                                   dirpath, dirs, files)
+
+        header = ["ENV", "Details"]
+        table = prettytable.PrettyTable(header)
+        table.align['ENV'] = "l"
+        table.align["Details"] = "l"
+
+        for env in envobj.keys():
+            table.add_row(["Environment: ", env])
+            table.add_row(["-" * 10, "-" * 10])
+            with open(envobj[env]['filepath'], "r") as fp:
+                state = json.load(fp)
+                for module in state['modules']:
+                    for reskey, resval in module['resources'].items():
+                        attributes = resval['primary']['attributes']
+                        if resval['type'] == "aws_instance":
+                            table.add_row([resval['type'],
+                                           attributes['tags.Name']])
+                        elif resval['type'] == "aws_key_pair":
+                            table.add_row([resval['type'],
+                                           attributes['key_name']])
+                        elif resval['type'] == "aws_security_group":
+                            table.add_row([resval['type'],
+                                           attributes['name']])
+
+        print table
+
+
 
 class GeneratorCli(object):
     def __init__(self, args):
@@ -306,10 +361,11 @@ def main():
         print "Namespace [%s] " % attrerr
         sys.exit()
 
-    if generator.parsed_input is None:
-        sys.exit()
+    if gencli.namespace.operation == "build":
+        if generator.parsed_input is None:
+            sys.exit()
 
-    generator.generate_environment()
+        generator.generate_environment()
 
 
 
