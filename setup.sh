@@ -48,9 +48,16 @@ function generate_ssh_keypair ()
         return
     fi
 
-    privkey_name=$1
+    ssh_key_dir="${curdir}/.ssh"
+    if [[ ! -d $ssh_key_dir ]]; then
+        mkdir $ssh_key_dir
+    fi
+
+    echo -n "Default (${ssh_key_dir}/symphony_accesskey): "; read privkey_name
+
     if [[ -z $privkey_name ]]; then
-        privkey_name="${curdir}/symphony_accesskey"
+        echo "choose default"
+        privkey_name="${ssh_key_dir}/symphony_accesskey"
     fi
 
     #######################################################
@@ -83,7 +90,7 @@ function setup_terraform ()
     # Setup Terraform.
     #######################################################
     if [[ ! -d ${tfdir} ]]; then
-        echox "$tfdir does not exist"
+        echox "$tfdir does not exist. Creating it"
         mkdir ${tfdir}
 
         wget ${tf_download_zip} \
@@ -158,6 +165,10 @@ function show_banner()
 #
 #
 #######################################################
+if [[ ! -d $logsdir ]]; then
+        mkdir $logsdir
+fi
+
 start_time=$(date +"%b-%d-%y %H%M%S")
 echo "----------------------------------------------" >> $setup_logs 2>&1
 echo "Start Setup Run: $start_time" >> $setup_logs 2>&1
@@ -166,11 +177,6 @@ echo "" >> $setup_logs 2>&1
 
 show_banner
 sleep 1
-
-if [[ ! -d $logsdir ]]; then
-    mkdir $logsdir
-fi
-
 
 
 #######################################################
@@ -194,10 +200,10 @@ git_pull ${ansible_repo} ${ansible_localdir} ${ansible_branch}
 
 # Add the Ansible submodules
 cd ${ansible_localdir}
-git submodule update --init --recursive  >> $setup_logs 2>&1
+git submodule update --init --recursive  > /dev/null
 cd ${curdir}
 
-echo -n "Do you want to specify a git repo for your environments? ('y'): "
+echo -n "Do you want to specify any additional git repo for your environments? ('y'): "
 read userinput
 if [[ ${userinput} == "y" ]]; then
     echo -n "git repo: "; read user_repo 
@@ -208,13 +214,10 @@ if [[ ${userinput} == "y" ]]; then
 fi
 
 
-
 # Env Setup.
 export ANSIBLE_HOST_KEY_CHECKING=False
 # Set pythonpath.
 export PYTHONPATH=${PYTHONPATH}:${curdir}
-
-
 
 
 
