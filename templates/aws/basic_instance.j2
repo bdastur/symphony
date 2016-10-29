@@ -1,0 +1,76 @@
+provider "aws" {
+    region = "{{ environment.region }}"
+    shared_credentials_file = "{{ environment.credentials_file }}"
+    profile = "{{ environment.profile_name }}" 
+}
+
+#--------------------------------------
+# AWS Accesskey.
+
+resource "aws_key_pair" "symphony_keypair" {
+    key_name = "symphony-accesskey1"
+    public_key = "${file("{{ environment.public_key_loc }}")}"
+}
+
+#--------------------------------------
+# Security Group
+
+{% for security_group in cluster.security_groups %}
+resource "aws_security_group" "symphony_sg_{{ loop.index }}" {
+    name = "{{ security_group.sg_name|default('symphony-sg') }}"
+    description = "{{ sg_description|default('Symphony generated security group') }}"
+    vpc_id = "{{ environment.vpc }}"
+  
+    {% for ingress_rule in security_group.ingress_rules %}
+    ingress {
+        from_port = {{ ingress_rule.from_port }}
+        to_port = {{ ingress_rule.to_port }}
+        protocol = "{{ ingress_rule.protocol }}"
+        cidr_blocks = ["{{ ingress_rule.cidr_blocks | safe }}"]
+    }
+    {%- endfor %} 
+   
+    {% for egress_rule in security_group.egress_rules %}
+    egress {
+        from_port = {{ egress_rule.from_port }}
+        to_port = {{ egress_rule.to_port }}
+        protocol = "{{ egress_rule.protocol }}"
+        cidr_blocks = ["{{ egress_rule.cidr_blocks }}"]
+    }
+    {%- endfor %} 
+
+    tags = {
+    {%- for tag in cluster.tags.keys() %}
+        {{ tag }} = "{{ cluster.tags[tag] }}"
+    {%- endfor %}
+    }
+ 
+}
+
+{% endfor %}
+
+
+resource "aws_instance" "symphony_instance" {
+    count = "{{ cluster.cluster_size }}"
+    instance_type = "{{ cluster.instance_type|default('t2.micro') }}"
+    ami = "{{ environment.amis['centos7'] }}"
+    vpc_security_group_ids = ["{{ environment.security_groups['all'] }}"]
+    subnet_id = "{{ environment.subnets['us-east-1b'] }}"
+    key_name = "${aws_key_pair.symphony_keypair.key_name}"
+
+    root_block_device = {
+        volume_type = "standard"
+        volume_size = "{{ volume_size | default('10') }}"
+        delete_on_termination = "true"
+    }
+
+    tags = {
+    {%- for tag in cluster.tags.keys() %}
+        {{ tag }} = "{{ cluster.tags[tag] }}"
+    {%- endfor %}
+    }
+
+}
+
+
+ 
