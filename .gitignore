@@ -91,3 +91,5 @@ ENV/
 # Symphony specific.
 tf/*
 tf_accesskey*
+symphony_accesskey*
+.logs/*
