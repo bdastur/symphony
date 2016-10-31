@@ -19,9 +19,18 @@ class TFParserUt(unittest.TestCase):
 
     def test_parser_init_valid(self):
         print "Test TFParser valid"
-        cluster_dir = "/tmp/userenv"
+        cluster_dir = "./testdata/env1"
         parser = tfparser.TFParser(cluster_dir, slogger=None)
         self.failUnless(parser.tfobject is not None)
+        print parser.tfobject
+
+    def test_parser_get_all_resource_types(self):
+        print "Test api for resource types"
+        cluster_dir = "./testdata/env1"
+        parser = tfparser.TFParser(cluster_dir, slogger=None)
+        self.failUnless(parser.tfobject is not None)
+        restypes = parser.parser_get_all_resource_types()
+        print "Resource types: ", restypes
 
 
 
