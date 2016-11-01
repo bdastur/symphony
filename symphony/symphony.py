@@ -10,6 +10,8 @@ Symphony:
 
 import sys
 import argparse
+import helper
+
 
 
 class SymphonyCli(object):
@@ -74,6 +76,7 @@ class SymphonyCli(object):
         banner += "=" * 50
         banner += "\nSymphony: Build, Deploy, Configure - with a click\n"
         banner += "-" * 50
+        banner += "\n"
 
         return banner
 
@@ -81,7 +84,15 @@ class SymphonyCli(object):
         '''
         Display help for deploy operation
         '''
-        msg = "This is a deploy operation"
+        msg = self.__print_banner()
+        msg += "Operation: deploy\n"
+        msg += "deploy operation takes the following user inputs:\n" \
+            "---------------------------------------------------\n" \
+            " staging: Location where terraform files are generated.\n"
+        msg += "\n"
+        msg += "The deploy step runs the terraform apply on the rendered\n" \
+            "terraform definitions in the staging location\n"
+
         return msg
 
     def show_build_help(self):
@@ -126,12 +137,54 @@ class SymphonyCli(object):
         print "symphony <operation> -h"
         print ""
 
+    def generate_operation_object(self, cli_namespace):
+        '''
+        Parse the argparse namespace object and return a
+        dictionary that returns the operation and params
+        '''
+        obj = {}
+        obj['operation'] = cli_namespace.operation
+
+        try:
+            obj['config'] = cli_namespace.config
+        except AttributeError:
+            pass
+
+        try:
+            obj['environment'] = cli_namespace.environment
+        except AttributeError:
+            pass
+        try:
+            obj['staging'] = cli_namespace.staging
+        except AttributeError:
+            pass
+
+        try:
+            obj['skip_deploy'] = cli_namespace.skip_deploy
+        except AttributeError:
+            pass
+
+
+        return obj
 
 
 
 def main():
     clihandler = SymphonyCli(sys.argv)
     print "Namespace: ", clihandler.namespace
+
+    # If the operation is not set, exit here.
+    if clihandler.namespace.operation is None:
+        sys.exit()
+
+    # From the parse object generated a dictionary which can be
+    # passed to the helper class.
+    operobj = clihandler.generate_operation_object(clihandler.namespace)
+    print operobj
+
+    helperobj = helper.Helper(operobj)
+    print helperobj
+
 
 
 

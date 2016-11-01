@@ -209,7 +209,7 @@ if [[ ${userinput} == "y" ]]; then
     echo -n "git repo: "; read user_repo 
     echo -n "branch: "; read branch
 
-    localpath="../usergitrepo_${branch}"
+    localpath="../userrepo_${branch}"
     git_pull ${user_repo} ${localpath} ${branch}
 fi
 
@@ -218,6 +218,8 @@ fi
 export ANSIBLE_HOST_KEY_CHECKING=False
 # Set pythonpath.
 export PYTHONPATH=${PYTHONPATH}:${curdir}
+
+echo "Pythonpath set: $PYTHONPATH"
 
 
 
