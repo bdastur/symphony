@@ -63,6 +63,21 @@ class SymphonyCli(object):
                     prog="symphony",
                     formatter_class=argparse.RawTextHelpFormatter,
                     description=self.show_deploy_help())
+
+                parser.add_argument("--staging",
+                                    required=True,
+                                    help="Path to terraform staging directory")
+            elif operation == "configure":
+                # Configure Operation Option.
+                parser = argparse.ArgumentParser(
+                    prog="symphony",
+                    formatter_class=argparse.RawTextHelpFormatter,
+                    description=self.show_configure_help())
+
+                parser.add_argument("--config",
+                                    required=True,
+                                    type=open,
+                                    help="User/Cluster configuration file")
                 parser.add_argument("--staging",
                                     required=True,
                                     help="Path to terraform staging directory")
@@ -96,6 +111,22 @@ class SymphonyCli(object):
         msg += "\n"
         msg += "The deploy step runs the terraform apply on the rendered\n" \
             "terraform definitions in the staging location\n"
+
+        return msg
+
+    def show_configure_help(self):
+        '''
+        Display help for configure operation
+        '''
+        msg = self.__print_banner()
+        msg += "Operation: configure\n"
+        msg += "configure operation takes the following user inputs:\n" \
+            "------------------------------------------------------\n" \
+            " config: The cluster configure file.\n\n" \
+            " staging: Location where the terraform files are generated.\n"
+        msg += "\n"
+        msg += "The configure step runs through the ansible playbooks for\n" \
+            "configuring the required services as asked by the user.\n"
 
         return msg
 
