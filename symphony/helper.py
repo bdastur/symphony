@@ -49,6 +49,8 @@ class Helper(object):
             self.valid = self.__populate_deploy_operation(operobj)
         elif operobj['operation'] == "configure":
             self.valid = self.__populate_configure_operation(operobj)
+        elif operobj['operation'] == "destroy":
+            self.valid = self.__populate_destroy_operation(operobj)
 
         self.slog.logger.info("Symphony Helper: Initialized")
 
@@ -212,6 +214,27 @@ class Helper(object):
 
         return True
 
+    def __populate_destroy_operation(self, operobj):
+        '''
+        Populate destroy operation params
+        '''
+        self.slog.logger.info("Helper: Destroy operation populate")
+
+        # Read the user input(staging location)
+        try:
+            self.tf_staging = operobj['staging']
+        except KeyError as keyerror:
+            self.slog.logger.error("Key not found [%s]", keyerror)
+            return False
+
+        if not os.path.exists(self.tf_staging) or \
+                not os.path.isdir(self.tf_staging):
+            self.slog.logger.error("Invalid staging location: %s",
+                                   self.tf_staging)
+            return False
+
+        return True
+
     def parse_cluster_configuration(self, config_file):
         '''
         Parse the cluster configuration file.
@@ -322,6 +345,9 @@ class Helper(object):
         elif self.operation == "configure":
             print "Configure operation"
             self.configure_terraform_environment(self.tf_staging)
+        elif self.operation == "destroy":
+            print "Destroy operation"
+            self.destroy_terraform_environment(self.tf_staging)
 
     def render_jinja2_template(self, templatefile, searchpath, obj):
         '''
@@ -412,6 +438,47 @@ class Helper(object):
 
             sys.stdout.write(nextline)
             sys.stdout.flush()
+
+    def destroy_terraform_environment(self, cluster_staging_dir):
+        '''
+        Given the path to the staging dir, cleanup the environment
+        '''
+        self.slog.logger.info("Cluster staging dir: %s", cluster_staging_dir)
+
+        tf_statefile = os.path.join(cluster_staging_dir, "terraform.tfstate")
+        if not os.path.exists(tf_statefile):
+            self.slog.logger.error("tf state file %s does not exist",
+                                   tf_statefile)
+            sys.exit()
+
+        # Confirm destroy command.
+        confirm_msg = "Do you really want to destroy?\n"
+        confirm_msg_fmt = logger.stringc(confirm_msg, "bold")
+
+        confirm_msg_fmt += "   Terraform will delete all your" \
+            " mapped infrastructure.\n" \
+            "   There is no undo. Only 'yes' will be accepted to confirm.\n"
+        print confirm_msg_fmt
+
+        option = raw_input("Enter a value:")
+        if option != "yes":
+            print "Only \"yes\" will delete"
+            return
+
+        # Terraform destroy
+        tf_destroy_cmd = ["terraform", "destroy", "-force"]
+        sproc = subprocess.Popen(tf_destroy_cmd,
+                                 cwd=cluster_staging_dir,
+                                 stdout=subprocess.PIPE)
+        while True:
+            nextline = sproc.stdout.readline()
+            if nextline == "" and sproc.poll() is not None:
+                break
+
+            sys.stdout.write(nextline)
+            sys.stdout.flush()
+
+
 
     def configure_terraform_environment(self, cluster_staging_dir):
         '''
