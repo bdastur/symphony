@@ -11,10 +11,17 @@ build, deploy, configure operations for symphony.
 
 import sys
 import os
+import time
 import subprocess
+import socket
+import paramiko
 import yaml
 import jinja2
 import utils.symphony_logger as logger
+try:
+    import symphony.tfparser as tfparser
+except ImportError:
+    import tfparser
 
 
 class Helper(object):
@@ -40,6 +47,8 @@ class Helper(object):
             self.valid = self.__populate_build_operation(operobj)
         elif operobj['operation'] == "deploy":
             self.valid = self.__populate_deploy_operation(operobj)
+        elif operobj['operation'] == "configure":
+            self.valid = self.__populate_configure_operation(operobj)
 
         self.slog.logger.info("Symphony Helper: Initialized")
 
@@ -141,7 +150,7 @@ class Helper(object):
 
         # Parse the cluster config.
         self.parsed_config = \
-            self.parse_cluster_configuation(self.cluster_config)
+            self.parse_cluster_configuration(self.cluster_config)
         if self.parsed_config is None:
             self.slog.logger.error("Failed to parse [%s]",
                                    self.cluster_config)
@@ -156,6 +165,29 @@ class Helper(object):
                                    self.env_path)
             return False
         self.slog.logger.debug("Parsed env: [%s]", self.parsed_env)
+
+        return True
+
+    def __populate_configure_operation(self, operobj):
+        '''
+        Populate config operation
+        '''
+
+        # Read the user input (cluster config file and staging location)
+        self.slog.logger.info("Helper: configure operation populate")
+        try:
+            self.cluster_config = operobj['config']
+            self.tf_staging = operobj['staging']
+        except KeyError as keyerror:
+            self.slog.logger.error("Key not found [%s]", keyerror)
+            return False
+
+        # Parse the cluster config.
+        self.parsed_config = \
+            self.parse_cluster_configuration(self.cluster_config)
+        if self.parsed_config is None:
+            self.slog.logger.error("Failed to parse [%s]",
+                                   self.cluster_config)
 
         return True
 
@@ -180,7 +212,7 @@ class Helper(object):
 
         return True
 
-    def parse_cluster_configuation(self, config_file):
+    def parse_cluster_configuration(self, config_file):
         '''
         Parse the cluster configuration file.
         '''
@@ -287,6 +319,9 @@ class Helper(object):
         elif self.operation == "deploy":
             print "Deploy operation"
             self.deploy_terraform_environment(self.tf_staging)
+        elif self.operation == "configure":
+            print "Configure operation"
+            self.configure_terraform_environment(self.tf_staging)
 
     def render_jinja2_template(self, templatefile, searchpath, obj):
         '''
@@ -377,6 +412,74 @@ class Helper(object):
 
             sys.stdout.write(nextline)
             sys.stdout.flush()
+
+    def configure_terraform_environment(self, cluster_staging_dir):
+        '''
+        Configure the terraform environment
+        '''
+        if not os.path.exists(cluster_staging_dir) or \
+                not os.path.isdir(cluster_staging_dir):
+            self.slog.logger.error("Staging dir %s does not exist",
+                                   cluster_staging_dir)
+            return
+
+        print "Configure"
+        ssh_failure = self.wait_for_ssh_connectivity(
+            cluster_staging_dir,
+            self.parsed_config['connection_info']['username'],
+            self.parsed_config['private_key_loc'])
+        if not ssh_failure:
+            print "Failed to connect to hosts."
+            return
+
+    def wait_for_ssh_connectivity(self,
+                                  cluster_staging_dir,
+                                  username,
+                                  private_key_loc):
+        '''
+        Wait for SSH Connectivity to the hosts.
+        '''
+        print "privkey loc: ", private_key_loc
+
+        parseobj = tfparser.TFParser(cluster_staging_dir)
+        instinfo = parseobj.parser_get_aws_instance_info()
+
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        ssh_hosts = []
+        for env in instinfo.keys():
+            for reskey, resval in instinfo[env].items():
+                ssh_hosts.append(resval['private_ip'])
+
+        retry_count = 0
+        while retry_count < 10:
+            no_ssh_failure = True
+            for ssh_host in ssh_hosts:
+                try:
+                    print "Try connection to [%s: %d]" % \
+                        (ssh_host, retry_count)
+                    ssh.connect(ssh_host,
+                                username=username,
+                                key_filename=private_key_loc,
+                                timeout=5,
+                                banner_timeout=5)
+                    print "Connection Success: [%s: %d]" % \
+                        (ssh_host, retry_count)
+                except socket.error as sockerr:
+                    print "Socket error: ", sockerr
+                    no_ssh_failure = False
+                except paramiko.ssh_exception.SSHException as paramikoerr:
+                    print "Paramiko ssh error ", paramikoerr
+                    no_ssh_failure = False
+
+            if no_ssh_failure:
+                break
+
+            retry_count += 1
+            time.sleep(10)
+
+        return no_ssh_failure
 
 
 

@@ -105,9 +105,27 @@ class TFParser(object):
 
         return envobj
 
+    def parser_get_aws_instance_info(self):
+        '''
+        Utility API to return the aws instances.
+        '''
+        obj = {}
+        for env in self.tfobject.keys():
+            obj[env] = {}
+            for module in self.tfobject[env]['modules']:
+                for reskey, resval in module['resources'].items():
+                    attributes = resval['primary']['attributes']
+                    restype = resval['type']
+                    resid = attributes['id']
 
+                    if restype == "aws_instance":
+                        instobj = {}
+                        instobj['ami'] = attributes['ami']
+                        instobj['private_ip'] = attributes['private_ip']
 
+                        obj[env][resid] = instobj
 
+        return obj
 
 
 
