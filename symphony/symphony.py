@@ -48,6 +48,10 @@ class SymphonyCli(object):
                 parser.add_argument("--staging",
                                     required=True,
                                     help="Path to terraform staging directory")
+                parser.add_argument("--template",
+                                    required=False,
+                                    default="./templates",
+                                    help="Path to the templates")
                 parser.add_argument("--skip-deploy",
                                     required=False,
                                     dest="skip_deploy",
@@ -164,6 +168,10 @@ class SymphonyCli(object):
         except AttributeError:
             pass
 
+        try:
+            obj['template'] = cli_namespace.template
+        except AttributeError:
+            pass
 
         return obj
 
@@ -183,7 +191,12 @@ def main():
     print operobj
 
     helperobj = helper.Helper(operobj)
-    print helperobj
+    print helperobj.valid
+    if not helperobj.valid:
+        print "Helper Initialization Failed."
+        sys.exit()
+
+    helperobj.perform_operation()
 
 
 
