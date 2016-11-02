@@ -9,7 +9,9 @@ build, deploy, configure operations for symphony.
 
 '''
 
+import sys
 import os
+import subprocess
 import yaml
 import jinja2
 import utils.symphony_logger as logger
@@ -36,6 +38,8 @@ class Helper(object):
 
         if operobj['operation'] == "build":
             self.valid = self.__populate_build_operation(operobj)
+        elif operobj['operation'] == "deploy":
+            self.valid = self.__populate_deploy_operation(operobj)
 
         self.slog.logger.info("Symphony Helper: Initialized")
 
@@ -155,6 +159,27 @@ class Helper(object):
 
         return True
 
+    def __populate_deploy_operation(self, operobj):
+        '''
+        Populate deploy operation
+        '''
+        self.slog.logger.info("Helper: Deploy operation populate")
+
+        # Read the user input (staging location)
+        try:
+            self.tf_staging = operobj['staging']
+        except KeyError as keyerror:
+            self.slog.logger.error("Key not found [%s]", keyerror)
+            return False
+
+        if not os.path.exists(self.tf_staging) or \
+                not os.path.isdir(self.tf_staging):
+            self.slog.logger.error("Invalid staging location %s",
+                                   self.tf_staging)
+            return False
+
+        return True
+
     def parse_cluster_configuation(self, config_file):
         '''
         Parse the cluster configuration file.
@@ -216,11 +241,11 @@ class Helper(object):
             self.slog.logger.error("Operation not set. Cannot perform task")
             return
 
-        # Normalize our parsed configuration.
-        self.normalized_data = self.__normalize_parsed_configuration()
-
         if self.operation == "build":
             # Build Operation.
+
+            # Normalize our parsed configuration.
+            self.normalized_data = self.__normalize_parsed_configuration()
             print "Build operation"
             if not os.path.exists(self.template_path) or \
                     not os.path.isdir(self.template_path):
@@ -259,7 +284,9 @@ class Helper(object):
             print "rendered data: ", rendered_data
             self.build_tf_cluster_staging_directory(rendered_data,
                                                     self.tf_staging)
-
+        elif self.operation == "deploy":
+            print "Deploy operation"
+            self.deploy_terraform_environment(self.tf_staging)
 
     def render_jinja2_template(self, templatefile, searchpath, obj):
         '''
@@ -311,14 +338,45 @@ class Helper(object):
 
         self.slog.logger.info("Build cluster staging: Successful")
 
+    def deploy_terraform_environment(self, cluster_staging_dir):
+        '''
+        Deploy the terraform environment
+        '''
+        self.slog.logger.info("Cluster Staging Dir: %s",
+                              cluster_staging_dir)
 
+        if not os.path.exists(cluster_staging_dir):
+            self.slog.logger.error("Staging Dir %s does not exist",
+                                   cluster_staging_dir)
+            return
 
+        # Terraform plan
+        tf_plan_cmd = ["terraform", "plan"]
+        sproc = subprocess.Popen(tf_plan_cmd,
+                                 cwd=cluster_staging_dir,
+                                 stdout=subprocess.PIPE)
 
+        while True:
+            nextline = sproc.stdout.readline()
+            if nextline == "" and sproc.poll() is not None:
+                break
 
+            sys.stdout.write(nextline)
+            sys.stdout.flush()
 
+        # Terraform apply.
+        tf_apply_cmd = ["terraform", "apply"]
+        sproc = subprocess.Popen(tf_apply_cmd,
+                                 cwd=cluster_staging_dir,
+                                 stdout=subprocess.PIPE)
 
+        while True:
+            nextline = sproc.stdout.readline()
+            if nextline == "" and sproc.poll() is not None:
+                break
 
-
+            sys.stdout.write(nextline)
+            sys.stdout.flush()
 
 
 
