@@ -478,8 +478,6 @@ class Helper(object):
             sys.stdout.write(nextline)
             sys.stdout.flush()
 
-
-
     def configure_terraform_environment(self, cluster_staging_dir):
         '''
         Configure the terraform environment
@@ -498,6 +496,39 @@ class Helper(object):
         if not ssh_failure:
             print "Failed to connect to hosts."
             return
+
+        # Now that we are able to reach all hosts.
+        # We can start configuring services.
+        for service in self.parsed_config['services'].keys():
+            kwargs = {}
+            print "service: ", service
+            print self.parsed_config['services'][service]
+            default_service_dir = os.path.join("./services", service)
+            default_hosts = "all"
+            kwargs['username'] = \
+                self.parsed_config['connection_info']['username']
+            kwargs['private_key'] = self.parsed_config['private_key_loc']
+            kwargs['tf_staging'] = cluster_staging_dir
+            kwargs['use_private_ip'] = \
+                self.parsed_config['connection_info'].get('use_private_ip',
+                                                          "True")
+
+            if self.parsed_config['services'][service] is not None:
+                service_dir = self.parsed_config['services'][service].get(
+                    'service_dir', default_service_dir)
+                kwargs['hosts'] = self.parsed_config['services'][service].get(
+                    'hosts', default_hosts)
+            else:
+                service_dir = default_service_dir
+                kwargs['hosts'] = default_hosts
+
+
+            default_playbook_name = "site.yaml"
+            self.execute_ansible_playbook(service_dir,
+                                          default_playbook_name,
+                                          **kwargs)
+
+
 
     def wait_for_ssh_connectivity(self,
                                   cluster_staging_dir,
@@ -548,8 +579,41 @@ class Helper(object):
 
         return no_ssh_failure
 
+    def execute_ansible_playbook(self,
+                                 playbook_path,
+                                 playbook_name,
+                                 **kwargs):
+        '''
+        Execute the ansible playbook
+        '''
+        print "playbook [%s, %s]" % (playbook_path, playbook_name)
 
+        tf_dynamic_inventory = "../../../tf_ansible/terraform.py"
 
+        # Set Ansible Options.
+        extra_vars = "username=%s hosts=%s" % \
+            (kwargs['username'], kwargs['hosts'])
+        private_key_option = "--private-key=%s" % kwargs['private_key']
+
+        # Set environment variables.
+        os.environ['TERRAFORM_STATE_ROOT'] = kwargs['tf_staging']
+        os.environ['ANSIBLE_HOST_KEY_CHECKING'] = "False"
+        os.environ['USE_PRIVATE_IP'] = kwargs['use_private_ip']
+
+        ansible_cmd = ["ansible-playbook", "-i", tf_dynamic_inventory,
+                       playbook_name, "-e", extra_vars,
+                       private_key_option]
+
+        sproc = subprocess.Popen(ansible_cmd,
+                                 cwd=playbook_path,
+                                 stdout=subprocess.PIPE)
+        while True:
+            nextline = sproc.stdout.readline()
+            if nextline == "" and sproc.poll() is not None:
+                break
+
+            sys.stdout.write(nextline)
+            sys.stdout.flush()
 
 
 
