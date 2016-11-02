@@ -67,6 +67,7 @@ codeCodes = {
     'purple':    '0;35', 'bright red':     '1;31',
     'yellow':    '0;33', 'bright purple':  '1;35',
     'dark gray': '1;30', 'bright yellow':  '1;33',
+    'bold': '1',
     'normal':    '0'
 }
 

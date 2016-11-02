@@ -81,6 +81,16 @@ class SymphonyCli(object):
                 parser.add_argument("--staging",
                                     required=True,
                                     help="Path to terraform staging directory")
+            elif operation == "destroy":
+                # Destroy Operation.
+                parser = argparse.ArgumentParser(
+                    prog="symphony",
+                    formatter_class=argparse.RawTextHelpFormatter,
+                    description=self.show_destroy_help())
+
+                parser.add_argument("--staging",
+                                    required=True,
+                                    help="Path to terraform staging directory")
 
         namespace = parser.parse_args()
         namespace.operation = operation
@@ -127,6 +137,21 @@ class SymphonyCli(object):
         msg += "\n"
         msg += "The configure step runs through the ansible playbooks for\n" \
             "configuring the required services as asked by the user.\n"
+
+        return msg
+
+    def show_destroy_help(self):
+        '''
+        Display help for Destroy operation
+        '''
+        msg = self.__print_banner()
+        msg += "Operation: Destroy\n"
+        msg += "destroy operation takes the following user inputs:\n" \
+            " staging: Location where the terraform files are generated.\n"
+        msg += "\n"
+        msg += "The destroy operation performs a terraform destroy \n" \
+            "to destroy the cluster. There are no second changes after this\n" \
+            "operation. No configs are retained, or backups taken.\n"
 
         return msg
 
