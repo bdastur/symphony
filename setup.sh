@@ -203,16 +203,25 @@ cd ${ansible_localdir}
 git submodule update --init --recursive  > /dev/null
 cd ${curdir}
 
-echo -n "Do you want to specify any additional git repo for your environments? ('y'): "
+echo ""
+echo -n "Do you want to specify any additional git repos for your environments? ('y'): "
 read userinput
-if [[ ${userinput} == "y" ]]; then
+echo ""
+
+while [[ ${userinput} == "y" ]]; do 
     echo -n "git repo: "; read user_repo 
     echo -n "branch: "; read branch
 
-    localpath="../userrepo_${branch}"
+    gitreponame=$(basename $user_repo)
+    gitreponame=${gitreponame%.*}
+    localpath="../${gitreponame}_${branch}"
     git_pull ${user_repo} ${localpath} ${branch}
-fi
 
+    echo ""
+    echo -n "Do you want to specify another repo? ('y'): "
+    read userinput
+    echo ""
+done
 
 # Env Setup.
 export ANSIBLE_HOST_KEY_CHECKING=False
