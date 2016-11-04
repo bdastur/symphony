@@ -203,6 +203,12 @@ cd ${ansible_localdir}
 git submodule update --init --recursive  > /dev/null
 cd ${curdir}
 
+################################################
+# Source the Ansible environment.
+################################################
+echo "Set Ansible Environment"
+source ${ansible_localdir}/hacking/env-setup
+
 echo ""
 echo -n "Do you want to specify any additional git repos for your environments? ('y'): "
 read userinput
