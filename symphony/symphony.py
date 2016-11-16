@@ -20,6 +20,11 @@ class SymphonyCli(object):
 
     def __build_parser(self, args):
         operation = None
+        parser = argparse.ArgumentParser(
+            prog="symphony",
+            formatter_class=argparse.RawTextHelpFormatter,
+            description=self.show_help())
+
         if len(args) == 1:
             # No arguments provided.
             parser = argparse.ArgumentParser(
@@ -91,6 +96,8 @@ class SymphonyCli(object):
                 parser.add_argument("--staging",
                                     required=True,
                                     help="Path to terraform staging directory")
+            else:
+                operation = None
 
         namespace = parser.parse_args()
         namespace.operation = operation
