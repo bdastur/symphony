@@ -21,6 +21,11 @@ class Logger(object):
         :type name: String
         :param name: Name of module (used when logging a message)
         '''
+        if hasattr(Logger, 'logger'):
+            self.logger = Logger.logger
+            self.logger.debug("Logger already initialized. Return instance")
+            return
+
         formatstr = '[%(asctime)s %(levelname)5s' \
             ' %(process)d %(name)s]: %(message)s'
         logging.basicConfig(
@@ -44,6 +49,7 @@ class Logger(object):
         logging.getLogger(name).addHandler(console)
 
         self.logger = logging.getLogger(name)
+        Logger.logger = self.logger
 
 
 

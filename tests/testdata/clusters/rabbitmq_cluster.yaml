@@ -1,0 +1,37 @@
+---
+
+#------------------------------------------------------------
+# Section 1: Defines how to setup the infrastructure pieces for
+# the cluster. It specifies things like:
+#   - Which cloud type to use?
+#   - Which environment to use. (environments are defined in a seperate file).
+#   - what is the size of the cluster to spin up and the template to use to spin up cluster.
+#     (A template defines how the cluster is spun up. Whether instances are behind a LB, do they
+#      use existing security groups or create newones, etc.)
+#
+environment: testenvironment
+
+clusters:
+    rabbitmq:
+        name: rabbitmq-testcluster
+        #environment: testenvironment 
+        public_key_loc: "/tmp/symphonykey.pub"
+        private_key_loc: "/tmp/symphonykey"
+        cluster_size: 3
+        cluster_template: basic_instance
+
+        tags:
+            Project: "Rabbitmq"
+            ApplicationRole: "Test"
+            Name: "Rabbitmq-${count.index}"
+            Cluster: "spawntestcluster"
+            Environment: "devtest"
+            BusinessUnit: "ACME"
+            OwnerEmail: "behzad_dastur"
+
+        connection_info:
+            username: "ec2-user"
+
+        services:
+            rabbitmq:
+
