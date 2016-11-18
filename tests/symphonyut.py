@@ -8,7 +8,7 @@ Unit tests for All symphony modules.
 import unittest
 import utils.symphony_logger as logger
 import symphony.tfparser as tfparser
-
+import symphony.helper as helper
 
 class TFParserUt(unittest.TestCase):
     def test_parser_init_invalid(self):
@@ -60,6 +60,40 @@ class SymphonyUt(unittest.TestCase):
 
         slog.logger.debug("Test logging newfile: DEBUG log")
 
+    def test_build_operation_init_invalid_1(self):
+        print "Helper Build operation init"
+        obj = {}
+        obj['operation'] = "build"
+        obj['config'] = open("./testdata/clusters/invalid_cluster.yaml")
+        obj['environment'] = "./testdata/environment/"
+        obj['staging'] = "./teststaging"
+        obj['skip_deploy'] = True
+        obj['template'] = "../templates"
+
+
+
+        print "Invalid cluster config --->"
+        helperobj = helper.Helper(obj)
+        self.failUnless(helperobj is not None)
+        self.failUnless(helperobj.valid is False)
+        obj['config'].close()
+
+        obj['config'] = open("./testdata/clusters/rabbitmq_cluster.yaml")
+        obj['environment'] = "./testdata/dummydir/"
+
+        print "Invlaid environments dir path --->"
+        helperobj = helper.Helper(obj)
+        self.failUnless(helperobj is not None)
+        self.failUnless(helperobj.valid is False)
+        obj['config'].close()
+
+        obj['config'] = open("./testdata/clusters/rabbitmq_cluster.yaml")
+        obj['environment'] = "./testdata/environment"
+        obj['staging'] = "/tmp/symphony.log"
+        print "Invlaid staging path --->"
+        helperobj = helper.Helper(obj)
+        self.failUnless(helperobj is not None)
+        self.failUnless(helperobj.valid is False)
 
 
 

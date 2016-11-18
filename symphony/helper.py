@@ -168,6 +168,12 @@ class Helper(object):
             return False
         self.slog.logger.debug("Parsed env: [%s]", self.parsed_env)
 
+        # Validate staging dir.
+        if os.path.exists(self.tf_staging) and \
+                not os.path.isdir(self.tf_staging):
+            self.slog.logger.error("Staging path cannot be a file")
+            return False
+
         return True
 
     def __populate_configure_operation(self, operobj):
@@ -239,6 +245,7 @@ class Helper(object):
         '''
         Parse the cluster configuration file.
         '''
+
         try:
             parsed_data = yaml.safe_load(config_file)
         except yaml.YAMLError as yamlerror:
@@ -370,7 +377,6 @@ class Helper(object):
         Create a new terraform staging folder. Generate a terraform
         definition file based on the rendered template
         '''
-        print "BRD: tf staging dir: ", userenv_dir
         if not os.path.exists(userenv_dir) or \
                 not os.path.isdir(userenv_dir):
             self.slog.logger.info("Invalid staging directory %s",

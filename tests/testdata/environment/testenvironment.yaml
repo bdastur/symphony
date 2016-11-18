@@ -1,0 +1,25 @@
+name: testenv 
+type: aws
+region: us-east-1
+credentials_file: "/home/behzad_dastur/.aws/credentials"
+profile_name: "default"
+
+amis:
+    centos7: "ami-xxxxxxx9"
+    ubuntu14: "ami-xxxxxxx4"
+
+vpc: vpc-8887777
+
+subnets:
+    us-east-1b: subnet-xxxxxxx2 
+    us-east-1c: subnet-xxxxxxx
+    us-east-1d: subnet-fddddddd
+    us-east-1e: subnet-c9999999
+
+security_groups:
+    all:   sg-5xxxxxxx
+    http:  sg-5xxxxxxx
+    https: sg-exxxxxxx
+    icmp:  sg-fxxxxxxx
+    ssh:   sg-xxxxxxx1
+
