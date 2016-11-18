@@ -10,11 +10,12 @@
 #      use existing security groups or create newones, etc.)
 #
 environment: testenvironment
+credentials_file: "/home/behzad_dastur/.aws/credentials"
+profile_name: "default"
 
 clusters:
     rabbitmq:
         name: rabbitmq-testcluster
-        #environment: testenvironment 
         public_key_loc: "/tmp/symphonykey.pub"
         private_key_loc: "/tmp/symphonykey"
         cluster_size: 3
