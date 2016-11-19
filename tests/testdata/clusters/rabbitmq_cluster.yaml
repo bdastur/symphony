@@ -9,9 +9,13 @@
 #     (A template defines how the cluster is spun up. Whether instances are behind a LB, do they
 #      use existing security groups or create newones, etc.)
 #
+name: testcluster
 environment: testenvironment
 credentials_file: "/home/behzad_dastur/.aws/credentials"
 profile_name: "default"
+
+public_key_loc: "/tmp/symphonykey.pub"
+private_key_loc: "/tmp/symphonykey"
 
 clusters:
     rabbitmq:

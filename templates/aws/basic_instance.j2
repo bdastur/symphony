@@ -1,28 +1,10 @@
-#------------------------------------
-# AWS Provider definition
-
-provider "aws" {
-    region = "{{ region }}"
-    shared_credentials_file = "{{ credentials_file }}"
-    profile = "{{ profile_name }}" 
-}
-
-#--------------------------------------
-# AWS Accesskey.
-
-resource "aws_key_pair" "spawn_keypair" {
-    key_name = "{{ cluster_name | default('symphony-accesskey1') }}-key"
-    public_key = "${file("{{ public_key_loc }}")}"
-}
-
-
 #--------------------------------------
 # AWS Instance.
 
 resource "aws_instance" "spawn_instance" {
     count = "{{ cluster_size }}"
     instance_type = "{{ instance_type|default('t2.micro') }}"
-    ami = "{{ amis['centos7'] }}"
+    ami = "{{ amis['centos7'] }}" 
     vpc_security_group_ids = ["{{ security_groups['all'] }}"]
     subnet_id = "{{ subnets['us-east-1b'] }}"
     key_name = "${aws_key_pair.spawn_keypair.key_name}"
@@ -38,8 +20,8 @@ resource "aws_instance" "spawn_instance" {
         {{ tag }} = "{{ tags[tag] }}"
     {%- endfor %}
     }
-
 }
+
 
 
 

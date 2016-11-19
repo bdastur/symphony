@@ -10,6 +10,7 @@ import utils.symphony_logger as logger
 import symphony.tfparser as tfparser
 import symphony.helper as helper
 
+
 class TFParserUt(unittest.TestCase):
     def test_parser_init_invalid(self):
         print "Test TFParser Initialization"
@@ -112,12 +113,25 @@ class SymphonyUt(unittest.TestCase):
         data = helperobj.normalize_parsed_configuration()
         print data
         self.failUnless(data['clusters']['rabbitmq']['region'] == 'us-east-1')
-        self.failUnless(data['clusters']['rabbitmq']\
+        self.failUnless(data['clusters']['rabbitmq']
                         ['amis']['centos7'] == "ami-xxxxxxx9")
         self.failUnless(data['profile_name'] == "default")
 
+    def test_perform_operation_build(self):
+        print "Test the perform_operation API for build"
+        obj = {}
+        obj['operation'] = "build"
+        obj['config'] = open("./testdata/clusters/rabbitmq_cluster.yaml")
+        obj['environment'] = "./testdata/environment"
+        obj['staging'] = "./teststaging"
+        obj['skip_deploy'] = True
+        obj['template'] = "../templates"
 
+        helperobj = helper.Helper(obj)
+        self.failUnless(helperobj is not None)
+        self.failUnless(helperobj.valid is True)
 
+        helperobj.perform_operation()
 
 
 
