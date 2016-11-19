@@ -70,8 +70,6 @@ class SymphonyUt(unittest.TestCase):
         obj['skip_deploy'] = True
         obj['template'] = "../templates"
 
-
-
         print "Invalid cluster config --->"
         helperobj = helper.Helper(obj)
         self.failUnless(helperobj is not None)
@@ -94,6 +92,34 @@ class SymphonyUt(unittest.TestCase):
         helperobj = helper.Helper(obj)
         self.failUnless(helperobj is not None)
         self.failUnless(helperobj.valid is False)
+        obj['config'].close()
+
+
+    def test_normalize_data(self):
+        print "Test Normalizing API"
+        obj = {}
+        obj['operation'] = "build"
+        obj['config'] = open("./testdata/clusters/rabbitmq_cluster.yaml")
+        obj['environment'] = "./testdata/environment"
+        obj['staging'] = "./teststaging"
+        obj['skip_deploy'] = True
+        obj['template'] = "../templates"
+
+        helperobj = helper.Helper(obj)
+        self.failUnless(helperobj is not None)
+        self.failUnless(helperobj.valid is True)
+
+        data = helperobj.normalize_parsed_configuration()
+        print data
+        self.failUnless(data['clusters']['rabbitmq']['region'] == 'us-east-1')
+        self.failUnless(data['clusters']['rabbitmq']\
+                        ['amis']['centos7'] == "ami-xxxxxxx9")
+        self.failUnless(data['profile_name'] == "default")
+
+
+
+
+
 
 
 

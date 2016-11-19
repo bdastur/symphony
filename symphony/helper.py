@@ -54,7 +54,7 @@ class Helper(object):
 
         self.slog.logger.info("Symphony Helper: Initialized")
 
-    def __normalize_parsed_configuration(self):
+    def normalize_parsed_configuration(self):
         '''
         The API goes through the parsed environment and cluster
         configuration, and forms a normalized configuration which is used
@@ -83,53 +83,69 @@ class Helper(object):
         default['region'] = "us-east-1"
         default['cloud_type'] = "aws"
         default['public_key_loc'] = ".ssh/symphonykey.pub"
+        default['private_key_loc'] = ".ssh/symphonykey"
+        default['credentials_file'] = "~/.aws/credentials"
+        default['profile_name'] = "default"
         default['cluster_size'] = 1
         default['instance_type'] = "t2.micro"
 
         data = {}
-        data['region'] = self.parsed_config.get('region',
-                                                default['region'])
+
         data['cloud_type'] = self.parsed_env.get('type',
                                                  default['cloud_type'])
         data['credentials_file'] = \
             self.parsed_config.get('credentials_file',
-                                   self.parsed_env.get('credentials_file',
-                                                       None))
+                                   default['credentials_file'])
         data['profile_name'] = \
             self.parsed_config.get('profile_name',
-                                   self.parsed_env.get('profile_name',
-                                                       None))
-        data['cluster_name'] = self.parsed_config.get('name', 'symphcluster')
-        data['cluster_size'] = self.parsed_config.get('cluster_size',
-                                                      default['cluster_size'])
-        data['instance_type'] = self.parsed_config.get('instance_type',
-                                                       default['instance_type'])
-
-        data['public_key_loc'] = \
-            self.parsed_config.get('public_key_loc',
-                                   self.parsed_env.get('public_key_loc',
-                                                       None))
-        data['private_key_loc'] = \
-            self.parsed_config.get('private_key_loc',
-                                   self.parsed_env.get('private_key_loc',
-                                                       None))
+                                   default['profile_name'])
         data['subnets'] = \
             self.parsed_config.get('subnets',
                                    self.parsed_env.get('subnets',
                                                        None))
         data['security_groups'] = \
-            self.parsed_config.get('security_groups',
+            self.parsed_config.get('subnets',
                                    self.parsed_env.get('security_groups',
                                                        None))
-        data['amis'] = \
-            self.parsed_config.get('amis',
-                                   self.parsed_env.get('amis',
-                                                       None))
 
-        data['tags'] = \
-            self.parsed_config.get('tags',
-                                   self.parsed_env.get('tags',
-                                                       None))
+        data['clusters'] = {}
+        for cluster in self.parsed_config['clusters'].keys():
+            data['clusters'][cluster] = {}
+            cobj = self.parsed_config['clusters'][cluster]
+
+            data['clusters'][cluster]['region'] = self.parsed_env.get(
+                'region',
+                default['region'])
+            data['clusters'][cluster]['cluster_name'] = \
+                cobj.get('name', cluster)
+            data['clusters'][cluster]['cluster_size'] = \
+                cobj.get('cluster_size', default['cluster_size'])
+            data['clusters'][cluster]['instance_type'] = \
+                cobj.get('instance_type', default['instance_type'])
+            data['clusters'][cluster]['public_key_loc'] = \
+                cobj.get('public_key_loc',
+                         self.parsed_config.get('public_key_loc',
+                                                default['public_key_loc']))
+            data['clusters'][cluster]['private_key_loc'] = \
+                cobj.get('private_key_loc',
+                         self.parsed_config.get('private_key_loc',
+                                                default['private_key_loc']))
+            data['clusters'][cluster]['cluster_template'] = \
+                cobj.get('cluster_template',
+                         self.parsed_config.get('cluster_template',
+                                                None))
+
+            data['clusters'][cluster]['tags'] = \
+                cobj.get('tags',  self.parsed_config.get('tags', None))
+
+            data['clusters'][cluster]['amis'] = \
+                cobj.get('amis',
+                         self.parsed_config.get(
+                             'amis',
+                             self.parsed_env.get('amis', None)))
+
+
+            print "Cluster: ", cluster
 
         return data
 
@@ -307,7 +323,7 @@ class Helper(object):
             # Build Operation.
 
             # Normalize our parsed configuration.
-            self.normalized_data = self.__normalize_parsed_configuration()
+            self.normalized_data = self.normalize_parsed_configuration()
             print "Build operation"
             if not os.path.exists(self.template_path) or \
                     not os.path.isdir(self.template_path):
