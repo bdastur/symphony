@@ -75,10 +75,11 @@ class Helper(object):
         if the same variable is defined under cluster config or instance,
         then that will take precedence.
         '''
-        required_fields = ['private_key_loc',
-                           'public_key_loc',
-                           'subnets',
-                           'security_groups']
+        config_required_fields = ['private_key_loc',
+                                 'public_key_loc',
+                                  'credentials_file',
+                                  'profile_name']
+
         default = {}
         default['region'] = "us-east-1"
         default['cloud_type'] = "aws"
@@ -88,8 +89,12 @@ class Helper(object):
         default['profile_name'] = "default"
         default['cluster_size'] = 1
         default['instance_type'] = "t2.micro"
+        default['cluster_name'] = "symphony-default-cluster"
 
         data = {}
+
+        data['cluster_name'] = self.parsed_config.get(
+            'name', default['cluster_name'])
 
         data['cloud_type'] = self.parsed_env.get('type',
                                                  default['cloud_type'])
@@ -99,6 +104,17 @@ class Helper(object):
         data['profile_name'] = \
             self.parsed_config.get('profile_name',
                                    default['profile_name'])
+        data['region'] = self.parsed_env.get(
+            'region', default['region'])
+
+        data['public_key_loc'] = \
+            self.parsed_config.get('public_key_loc',
+                                   default['public_key_loc'])
+
+        data['private_key_loc'] = \
+            self.parsed_config.get('private_key_loc',
+                                   default['private_key_loc'])
+
         data['subnets'] = \
             self.parsed_config.get('subnets',
                                    self.parsed_env.get('subnets',
@@ -144,9 +160,22 @@ class Helper(object):
                              'amis',
                              self.parsed_env.get('amis', None)))
 
+            data['clusters'][cluster]['subnets'] = self.parsed_config.get(
+                    'subnets',
+                    self.parsed_env.get('subnets', None))
 
-            print "Cluster: ", cluster
+            data['clusters'][cluster]['security_groups'] = \
+                self.parsed_config.get('security_groups',
+                                       self.parsed_env.get(
+                                           'security_groups', None))
 
+
+
+        # Validate normalized data.
+        for item in config_required_fields:
+            if item not in data.keys():
+                self.slog.logger.error("%s not found in normalized data",
+                                       item)
         return data
 
     def __populate_build_operation(self, operobj):
@@ -188,6 +217,13 @@ class Helper(object):
         if os.path.exists(self.tf_staging) and \
                 not os.path.isdir(self.tf_staging):
             self.slog.logger.error("Staging path cannot be a file")
+            return False
+
+        # Validate template path.
+        if not os.path.exists(self.template_path) or \
+                not os.path.isdir(self.template_path):
+            self.slog.logger.error("Ivalid template path [%s]",
+                                   self.template_path)
             return False
 
         return True
@@ -317,7 +353,7 @@ class Helper(object):
         '''
         if self.operation is None:
             self.slog.logger.error("Operation not set. Cannot perform task")
-            return
+            return 1
 
         if self.operation == "build":
             # Build Operation.
@@ -329,39 +365,25 @@ class Helper(object):
                     not os.path.isdir(self.template_path):
                 self.slog.logger.error("Invalid path to templates [%s]",
                                        self.template_path)
-                return
+                return 1
 
-            try:
-                cluster_template = \
-                    self.parsed_config['cluster_template']
-            except KeyError:
-                self.slog.logger.error(
-                    "No field 'cluster_template' found cluster config")
-                return
+            # Create the staging directory
+            ret = self.build_tf_cluster_staging_directory(self.tf_staging)
+            if ret != 0:
+                return ret
 
-            print "cluster template: ", cluster_template
+            # Render the common template.
+            self.render_symphony_template("common",
+                                          self.tf_cluster_staging,
+                                          self.normalized_data)
 
-            cloud_type = self.normalized_data['cloud_type']
-            template_path = os.path.join(self.template_path,
-                                         cloud_type)
-            template_filename = cluster_template + ".j2"
-            template_file = os.path.join(template_path,
-                                         cluster_template) + ".j2"
-
-            try:
-                template_fp = open(template_file, "r")
-            except IOError as ioerror:
-                self.slog.logger.error("Failed to open %s [%s]",
-                                       template_fp, ioerror)
-                return
-
-            rendered_data = self.render_jinja2_template(
-                template_filename,
-                template_path,
-                self.normalized_data)
-            print "rendered data: ", rendered_data
-            self.build_tf_cluster_staging_directory(rendered_data,
-                                                    self.tf_staging)
+            # Render templates for cluster specific.
+            for cluster in self.normalized_data['clusters'].keys():
+                obj = self.normalized_data['clusters'][cluster]
+                templatename = obj['cluster_template']
+                self.render_symphony_template(templatename,
+                                              self.tf_cluster_staging,
+                                              obj)
         elif self.operation == "deploy":
             print "Deploy operation"
             self.deploy_terraform_environment(self.tf_staging)
@@ -371,6 +393,40 @@ class Helper(object):
         elif self.operation == "destroy":
             print "Destroy operation"
             self.destroy_terraform_environment(self.tf_staging)
+
+    def render_symphony_template(self,
+                                 template_name,
+                                 staging_dir,
+                                 normalized_data):
+        '''
+        Render the template
+        '''
+        cloud_type = self.normalized_data['cloud_type']
+        template_path = os.path.join(self.template_path,
+                                     cloud_type)
+        template_filename = template_name + ".j2"
+        template_file_path = os.path.join(template_path,
+                                          template_name) + ".j2"
+        try:
+            template_fp = open(template_file_path, "r")
+        except IOError as ioerr:
+            self.slog.logger.error("Failed to open template file %s [%s]",
+                                   template_path, ioerr)
+            return 1
+        template_fp.close()
+
+        rendered_data = self.render_jinja2_template(template_filename,
+                                                    template_path,
+                                                    normalized_data)
+
+        print "Rendered data: \n", rendered_data
+
+        tf_filename = template_name + ".tf"
+
+        tf_filepath = os.path.join(staging_dir, tf_filename)
+        tf_fp = open(tf_filepath, "w")
+        tf_fp.write(rendered_data)
+        tf_fp.close()
 
     def render_jinja2_template(self, templatefile, searchpath, obj):
         '''
@@ -386,9 +442,7 @@ class Helper(object):
 
         return rendered_data
 
-    def build_tf_cluster_staging_directory(self,
-                                           rendered_data,
-                                           userenv_dir):
+    def build_tf_cluster_staging_directory(self, userenv_dir):
         '''
         Create a new terraform staging folder. Generate a terraform
         definition file based on the rendered template
@@ -413,13 +467,8 @@ class Helper(object):
                                   subdir_path)
             os.mkdir(subdir_path)
 
-        tf_filename = os.path.join(subdir_path, "main.tf")
-
-        tf_fp = open(tf_filename, "w")
-        tf_fp.write(rendered_data)
-        tf_fp.close()
-
         self.slog.logger.info("Build cluster staging: Successful")
+        return 0
 
     def deploy_terraform_environment(self, cluster_staging_dir):
         '''

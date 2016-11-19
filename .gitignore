@@ -8,6 +8,7 @@ __pycache__/
 
 # Swap files
 *.swp
+*.swo
 
 # Distribution / packaging
 .Python
@@ -96,3 +97,4 @@ tf/*
 tf_accesskey*
 symphony_accesskey*
 .logs/*
+*teststaging*

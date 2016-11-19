@@ -1,0 +1,18 @@
+#------------------------------------
+# AWS Provider definition
+
+provider "aws" {
+    region = "{{ region }}"
+    shared_credentials_file = "{{ credentials_file }}"
+    profile = "{{ profile_name }}" 
+}
+
+#--------------------------------------
+# AWS Accesskey.
+
+resource "aws_key_pair" "spawn_keypair" {
+    key_name = "{{ cluster_name | default('symphony-accesskey2') }}-key"
+    public_key = "${file("{{ public_key_loc }}")}"
+}
+
+
