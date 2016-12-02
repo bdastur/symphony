@@ -374,6 +374,7 @@ class Helper(object):
 
             # Render the common template.
             self.render_symphony_template("common",
+                                          "common",
                                           self.tf_cluster_staging,
                                           self.normalized_data)
 
@@ -381,7 +382,9 @@ class Helper(object):
             for cluster in self.normalized_data['clusters'].keys():
                 obj = self.normalized_data['clusters'][cluster]
                 templatename = obj['cluster_template']
+                tf_filename = obj['cluster_name']
                 self.render_symphony_template(templatename,
+                                              tf_filename,
                                               self.tf_cluster_staging,
                                               obj)
         elif self.operation == "deploy":
@@ -396,6 +399,7 @@ class Helper(object):
 
     def render_symphony_template(self,
                                  template_name,
+                                 tf_filename,
                                  staging_dir,
                                  normalized_data):
         '''
@@ -421,7 +425,7 @@ class Helper(object):
 
         print "Rendered data: \n", rendered_data
 
-        tf_filename = template_name + ".tf"
+        tf_filename = tf_filename + ".tf"
 
         tf_filepath = os.path.join(staging_dir, tf_filename)
         tf_fp = open(tf_filepath, "w")
