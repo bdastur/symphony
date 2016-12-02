@@ -39,4 +39,25 @@ clusters:
 
         services:
             rabbitmq:
+    mysql:
+        name: mysql-testcluster
+        cluster_size: 2
+        cluster_template: basic_instance
+
+        tags:
+            Project: "Mysql"
+            ApplicationRole: "Test"
+            Name: "Rabbitmq-${count.index}"
+            Cluster: "spawntestcluster"
+            Environment: "devtest"
+            BusinessUnit: "ACME"
+            OwnerEmail: "behzad_dastur"
+
+        connection_info:
+            username: "ec2-user"
+
+        services:
+            mysql:
+
+
 
