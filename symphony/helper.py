@@ -599,8 +599,6 @@ class Helper(object):
                                           default_playbook_name,
                                           **kwargs)
 
-
-
     def wait_for_ssh_connectivity(self,
                                   cluster_staging_dir,
                                   username,
