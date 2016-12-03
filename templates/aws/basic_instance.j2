@@ -1,7 +1,7 @@
 #--------------------------------------
 # AWS Instance.
 
-resource "aws_instance" "spawn_instance" {
+resource "aws_instance" "spawn_instance_{{ cluster_name }}" {
     count = "{{ cluster_size }}"
     instance_type = "{{ instance_type|default('t2.micro') }}"
     ami = "{{ amis['centos7'] }}" 
@@ -23,6 +23,6 @@ resource "aws_instance" "spawn_instance" {
 }
 
 output "{{ cluster_name }}_ips" {
-    value = ["${aws_instance.spawn_instance.*.private_ips}"]
+    value = ["${aws_instance.spawn_instance_{{ cluster_name }}.*.private_ips}"]
 }
 
