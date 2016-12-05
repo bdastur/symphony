@@ -83,6 +83,9 @@ class SymphonyCli(object):
                                     required=True,
                                     type=open,
                                     help="User/Cluster configuration file")
+                parser.add_argument("--environment",
+                                    required=True,
+                                    help="Path to environments configuration")
                 parser.add_argument("--staging",
                                     required=True,
                                     help="Path to terraform staging directory")
