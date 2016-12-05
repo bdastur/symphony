@@ -76,7 +76,7 @@ class Helper(object):
         then that will take precedence.
         '''
         config_required_fields = ['private_key_loc',
-                                 'public_key_loc',
+                                  'public_key_loc',
                                   'credentials_file',
                                   'profile_name']
 
@@ -124,6 +124,9 @@ class Helper(object):
                                    self.parsed_env.get('security_groups',
                                                        None))
 
+        data['connection_info'] = self.parsed_config.get('connection_info')
+
+
         data['clusters'] = {}
         for cluster in self.parsed_config['clusters'].keys():
             data['clusters'][cluster] = {}
@@ -169,7 +172,9 @@ class Helper(object):
                                        self.parsed_env.get(
                                            'security_groups', None))
 
-
+            data['clusters'][cluster]['services'] = \
+                cobj.get('services',
+                         None)
 
         # Validate normalized data.
         for item in config_required_fields:
@@ -237,6 +242,7 @@ class Helper(object):
         self.slog.logger.info("Helper: configure operation populate")
         try:
             self.cluster_config = operobj['config']
+            self.env_path = operobj['environment']
             self.tf_staging = operobj['staging']
         except KeyError as keyerror:
             self.slog.logger.error("Key not found [%s]", keyerror)
@@ -248,6 +254,15 @@ class Helper(object):
         if self.parsed_config is None:
             self.slog.logger.error("Failed to parse [%s]",
                                    self.cluster_config)
+
+        # Parse the environment file.
+        self.parsed_env = \
+            self.parse_environment_configuration(self.env_path)
+        if self.parsed_env is None:
+            self.slog.logger.error("Failed to parse [%s]",
+                                   self.env_path)
+            return False
+        self.slog.logger.debug("Parsed env: [%s]", self.parsed_env)
 
         return True
 
@@ -392,6 +407,7 @@ class Helper(object):
             self.deploy_terraform_environment(self.tf_staging)
         elif self.operation == "configure":
             print "Configure operation"
+            self.normalized_data = self.normalize_parsed_configuration()
             self.configure_terraform_environment(self.tf_staging)
         elif self.operation == "destroy":
             print "Destroy operation"
@@ -574,28 +590,35 @@ class Helper(object):
 
         # Now that we are able to reach all hosts.
         # We can start configuring services.
-        for service in self.parsed_config['services'].keys():
-            kwargs = {}
-            print "service: ", service
-            print self.parsed_config['services'][service]
-            default_service_dir = os.path.join("./services", service)
-            default_hosts = "all"
-            kwargs['username'] = \
-                self.parsed_config['connection_info']['username']
-            kwargs['private_key'] = self.parsed_config['private_key_loc']
-            kwargs['tf_staging'] = cluster_staging_dir
-            kwargs['use_private_ip'] = \
-                self.parsed_config['connection_info'].get('use_private_ip',
-                                                          "True")
+        for cluster in self.normalized_data['clusters'].keys():
+            services = self.normalized_data['clusters'][cluster]['services']
+            print "%s: Services: %s " % (cluster, services)
 
-            if self.parsed_config['services'][service] is not None:
-                service_dir = self.parsed_config['services'][service].get(
-                    'service_dir', default_service_dir)
-                kwargs['hosts'] = self.parsed_config['services'][service].get(
-                    'hosts', default_hosts)
-            else:
-                service_dir = default_service_dir
-                kwargs['hosts'] = default_hosts
+            default_hosts = \
+                self.normalized_data['clusters'][cluster]['cluster_name']
+
+            for service in services.keys():
+                kwargs = {}
+                print "service: ", service
+                print services[service]
+                default_service_dir = os.path.join("./services", service)
+                kwargs['username'] = \
+                    self.normalized_data['connection_info']['username']
+                kwargs['private_key'] = self.normalized_data['private_key_loc']
+                kwargs['tf_staging'] = cluster_staging_dir
+                kwargs['use_private_ip'] = \
+                    self.normalized_data['connection_info'].get(
+                        'use_private_ip',
+                        "True")
+
+                if services[service] is not None:
+                    service_dir = services[service].get(
+                        'service_dir', default_service_dir)
+                    kwargs['hosts'] = services[service].get(
+                        'hosts', default_hosts)
+                else:
+                    service_dir = default_service_dir
+                    kwargs['hosts'] = default_hosts
 
 
             default_playbook_name = "site.yaml"
@@ -659,7 +682,8 @@ class Helper(object):
         '''
         Execute the ansible playbook
         '''
-        print "playbook [%s, %s]" % (playbook_path, playbook_name)
+        print "playbook [%s, %s] hosts: %s" % \
+            (playbook_path, playbook_name, kwargs['hosts'])
 
         tf_dynamic_inventory = "../../../tf_ansible/terraform.py"
 

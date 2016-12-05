@@ -22,7 +22,7 @@ resource "aws_instance" "spawn_instance_{{ cluster_name }}" {
     }
 }
 
-output "{{ cluster_name }}_ips" {
-    value = ["${aws_instance.spawn_instance_{{ cluster_name }}.*.private_ips}"]
+output "{{ cluster_name }}" {
+    value = ["${aws_instance.spawn_instance_{{ cluster_name }}.*.private_ip}"]
 }
 

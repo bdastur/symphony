@@ -1,0 +1,8 @@
+- name: Deploy mysql cluster
+  hosts: "{{ hosts }}"
+  user: "{{ username }}"
+  sudo: "yes" 
+  sudo_user: root
+  roles:
+    - { role: "mysql" }
+
