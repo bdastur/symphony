@@ -24,6 +24,8 @@ and all resources within.
 import sys
 import os
 import json
+import prettytable
+import re
 import utils.symphony_logger as logger
 
 
@@ -126,6 +128,100 @@ class TFParser(object):
                         obj[env][resid] = instobj
 
         return obj
+
+    def terraform_get_environment_summary(self):
+        '''
+        Return a reformat obj with summarized info.
+        Can be used to display.
+        '''
+        summary = {}
+        for env in self.tfobject.keys():
+            summary[env] = {}
+            for module in self.tfobject[env]['modules']:
+                for reskey, resval in module['resources'].items():
+                    attributes = resval['primary']['attributes']
+                    restype = resval['type']
+                    if summary[env].get(restype, None) is None:
+                        summary[env][restype] = {}
+
+                    res_id = attributes['id']
+                    summary[env][restype][res_id] = {}
+                    obj = summary[env][restype][res_id]
+                    if restype == "aws_instance":
+                        obj['ami'] = attributes['ami']
+                        obj['private_ip'] = attributes['private_ip']
+                        obj['instance_state'] = attributes['instance_state']
+                        obj['instance_type'] = attributes['instance_type']
+                        obj['key_name'] = attributes['key_name']
+                    if restype == "aws_elb":
+                        obj['name'] = attributes['name']
+                        obj['availability_zones'] = []
+                        obj['instances'] = []
+                        for key, attr in attributes.items():
+                            if re.match(r'availability_zones\.(\d+)',
+                                        key):
+                                obj['availability_zones'].append(attr)
+                            elif re.match(r'instances\.(\d+)',
+                                          key):
+                                obj['instances'].append(attr)
+
+        return summary
+
+    def terraform_display_aws_resource_summary(self,
+                                               resource_type,
+                                               resource_info):
+        '''
+        Display aws instance summary info.
+        '''
+        header_set = False
+        headers = []
+        row = []
+        for resource in resource_info.keys():
+            row = []
+            if not header_set:
+                headers.append("Id")
+
+            row.append(resource)
+            for key, attr in resource_info[resource].items():
+                if not header_set:
+                    headers.append(key)
+                row.append(attr)
+
+            if not header_set:
+                table = prettytable.PrettyTable(headers)
+                header_set = True
+
+            table.add_row(row)
+
+        print "Resource: " + resource_type
+        print "-" * 30
+        print table
+        print "\n"
+
+
+    def terraform_display_environments(self):
+        '''
+        API that displays the tf environments.
+        '''
+        summary = self.terraform_get_environment_summary()
+        print "=" * 50
+        print "Symphony - TF Environments"
+        print "=" * 50
+
+        for env in summary.keys():
+            print "Environment: ", env
+            print "-" * 30
+
+            for restype in summary[env].keys():
+                if restype == "aws_instance" or \
+                        restype == "aws_elb":
+                    self.terraform_display_aws_resource_summary(
+                        restype,
+                        summary[env][restype])
+            print "\n"
+
+
+
 
 
 
