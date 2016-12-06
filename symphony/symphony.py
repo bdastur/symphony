@@ -99,6 +99,17 @@ class SymphonyCli(object):
                 parser.add_argument("--staging",
                                     required=True,
                                     help="Path to terraform staging directory")
+            elif operation == "list":
+                # List Operation.
+                parser = argparse.ArgumentParser(
+                    prog="symphony",
+                    formatter_class=argparse.RawTextHelpFormatter,
+                    description=self.show_list_help())
+
+                parser.add_argument("--staging",
+                                    required=True,
+                                    help="Path to terraform staging directory")
+
             else:
                 operation = None
 
@@ -162,6 +173,20 @@ class SymphonyCli(object):
         msg += "The destroy operation performs a terraform destroy \n" \
             "to destroy the cluster. There are no second changes after this\n" \
             "operation. No configs are retained, or backups taken.\n"
+
+        return msg
+
+    def show_list_help(self):
+        '''
+        Display help for List operation
+        '''
+        msg = self.__print_banner()
+        msg += "Operation: List\n"
+        msg += "list operation takes the following user inputs:\n" \
+            " staging: Location where the terraform files are generated.\n"
+        msg += "\n"
+        msg += "The list operation parsers through the staging location\n" \
+            "to display a tabular list of resources generated per cluster.\n"
 
         return msg
 

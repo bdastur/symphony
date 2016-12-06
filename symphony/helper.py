@@ -51,6 +51,8 @@ class Helper(object):
             self.valid = self.__populate_configure_operation(operobj)
         elif operobj['operation'] == "destroy":
             self.valid = self.__populate_destroy_operation(operobj)
+        elif operobj['operation'] == "list":
+            self.valid = self.__populate_list_operation(operobj)
 
         self.slog.logger.info("Symphony Helper: Initialized")
 
@@ -287,6 +289,27 @@ class Helper(object):
 
         return True
 
+    def __populate_list_operation(self, operobj):
+        '''
+        Populate list operation
+        '''
+        print "List: ", operobj
+
+        # Read the user input (staging location)
+        try:
+            self.tf_staging = operobj['staging']
+        except KeyError as keyerror:
+            self.slog.logger.error("Key not found [%s]", keyerror)
+            return False
+
+        if not os.path.exists(self.tf_staging) or \
+                not os.path.isdir(self.tf_staging):
+            self.slog.logger.error("Invalid staging location %s",
+                                   self.tf_staging)
+            return False
+
+        return True
+
     def __populate_destroy_operation(self, operobj):
         '''
         Populate destroy operation params
@@ -412,6 +435,9 @@ class Helper(object):
         elif self.operation == "destroy":
             print "Destroy operation"
             self.destroy_terraform_environment(self.tf_staging)
+        elif self.operation == "list":
+            self.display_terraform_environment(self.tf_staging)
+
 
     def render_symphony_template(self,
                                  template_name,
@@ -568,6 +594,18 @@ class Helper(object):
 
             sys.stdout.write(nextline)
             sys.stdout.flush()
+
+    def display_terraform_environment(self, cluster_staging_dir):
+        '''
+        Given the path to staging dir, walk through the directory
+        and display the resources created for each environment
+        '''
+        print "BRD: Display tf env: ", cluster_staging_dir
+
+        parserobj = tfparser.TFParser(cluster_staging_dir)
+        parserobj.terraform_display_environments()
+
+
 
     def configure_terraform_environment(self, cluster_staging_dir):
         '''
