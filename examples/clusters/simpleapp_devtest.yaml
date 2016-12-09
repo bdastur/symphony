@@ -1,0 +1,99 @@
+---
+#--------------------------------------------
+# A simple example, defining two clusters.
+# 1. rabbitmq 
+# 2. mysql.
+#--------------------------------------------
+
+# Name of your cluster/app.
+name: mytestapp
+
+# environment specifies which cloud environment you want to deploy your cluster
+# in. See at the exaples in environment directory for how the environment is
+# defined.
+environment: myawstestenv_useast1
+
+# The credentials file (specific to aws) specifies where the 
+# AWS Access keys are stored.
+credentials_file: "/home/behzad_dastur/.aws/credentials"
+
+# Specify which profile to use.
+profile_name: "default"
+
+# Public and Private key info.
+# This is needed for the configure step.
+public_key_loc: "/tmp/symphonykey.pub"
+private_key_loc: "/tmp/symphonykey"
+
+# Connection info specifies how to access the instances/resources
+# created. Note that you can specify connection_info in the cluster
+# definition below to override this global definition.
+
+connection_info:
+    username: "ec2-user"
+
+# Cluster definitions.
+clusters:
+    # RabbitMQ cluster definition.
+    rabbitmq:
+        name: rabbitmq-testcluster
+        public_key_loc: "/tmp/symphonykey.pub"
+        private_key_loc: "/tmp/symphonykey"
+        cluster_size: 3
+        # Name of the template to deploy. 
+        # Templates are defined under templates/aws folder
+        # A template represents how the cluster gets deployed.
+        # For instance a basic instance template deploys aws_instances only
+        # while a elb_template will deploy the instances and put them behind the elb.
+        cluster_template: basic_instance
+
+        # Tags.
+        # If the TF type allows tags, then you can specify them as below.
+        # Tags help to identify your resources. For instance in AWS you can
+        # search of all your resources with specific tags.
+        # Tags are not required for symphony. Symphony will use the 
+        # cluster 'name'. eg: rabbitmq-testcluster, which you provide. 
+        tags:
+            Project: "Rabbitmq"
+            ApplicationRole: "Test"
+            Name: "Rabbitmq-${count.index}"
+            Cluster: "spawntestcluster"
+            Environment: "devtest"
+            BusinessUnit: "ACME"
+            OwnerEmail: "behzad_dastur"
+
+        # Connection info specifies how you want to connect to the instances.
+        # Currently only username is supported, but this is where additional 
+        # configurable parameters can be added which specify how to connect to the
+        # instance.
+        connection_info:
+            username: "ec2-user"
+
+        # Services specify which services to configure on the cluster instances.
+        # Symphony by default relies on Ansible to do that. You can have multiple
+        # services definitions.
+        # You can also specify the service_dir, to specify path to you ansible site.yaml.
+        services:
+            rabbitmq:
+            lmmagent:
+                service_dir: /myws/service/lmm
+    mysql:
+        name: mysql-testcluster
+        cluster_size: 2
+        cluster_template: basic_instance
+
+        tags:
+            Project: "Mysql"
+            ApplicationRole: "Test"
+            Name: "Mysql-${count.index}"
+            Cluster: "spawntestcluster"
+            Environment: "devtest"
+            BusinessUnit: "ACME"
+            OwnerEmail: "behzad_dastur"
+
+        connection_info:
+            username: "ec2-user"
+
+        services:
+            mysql:
+

@@ -1,0 +1,39 @@
+################################################
+# An environment defintion defines the key parameters
+# for your environments which will be used by
+# symphony when building the cluster environment.
+#
+# It can be consumed by multiple cluster definitions.
+#################################################
+name: testenv-aws 
+
+# Specify the type of cloud.
+# Currently only 'aws' is supported.
+type: aws
+region: us-east-1
+
+# You may specify these properties here, but note that
+# they will be overriden in the cluster definiton.
+credentials_file: "/home/behzad_dastur/.aws/credentials"
+profile_name: "default"
+
+# Specify the amis  
+amis:
+    centos7: "ami-2exxxxx3"
+    ubuntu14: "ami-exxxxxx4"
+
+vpc: vpc-6xxxxxxb
+
+subnets:
+    us-east-1b: subnet-bxxx1xxx 
+    us-east-1c: subnet-8ex0xxxx
+    us-east-1d: subnet-bxxxxxxf
+    us-east-1e: subnet-cxxxxxx6
+
+security_groups:
+    all:   sg-xxxxxx2f
+    http:  sg-5xxxxxxf
+    https: sg-6xxxxxxe
+    icmp:  sg-6xxxxxxf 
+    ssh:   sg-xxxxxx21
+
