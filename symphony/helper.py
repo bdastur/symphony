@@ -174,6 +174,9 @@ class Helper(object):
                                        self.parsed_env.get(
                                            'security_groups', None))
 
+            data['clusters'][cluster]['user_init_script'] = \
+                cobj.get('init_script', None)
+
             data['clusters'][cluster]['services'] = \
                 cobj.get('services',
                          None)
@@ -421,10 +424,17 @@ class Helper(object):
                 obj = self.normalized_data['clusters'][cluster]
                 templatename = obj['cluster_template']
                 tf_filename = obj['cluster_name']
+                obj['init_script'] = "./scripts/%s.sh" % tf_filename
                 self.render_symphony_template(templatename,
                                               tf_filename,
                                               self.tf_cluster_staging,
                                               obj)
+
+                # Now that we have taken care of rendering the template,
+                # check if user has provided init script and set that as well.
+                self.generate_init_script(tf_filename,
+                                          self.tf_cluster_staging,
+                                          obj['user_init_script'])
         elif self.operation == "deploy":
             print "Deploy operation"
             self.deploy_terraform_environment(self.tf_staging)
@@ -437,6 +447,60 @@ class Helper(object):
             self.destroy_terraform_environment(self.tf_staging)
         elif self.operation == "list":
             self.display_terraform_environment(self.tf_staging)
+
+    def generate_init_script(self,
+                             tf_filename,
+                             tf_cluster_staging,
+                             user_init_script):
+        '''
+        Generate the init script.
+        '''
+        scripts_dir = os.path.join(tf_cluster_staging, "scripts")
+        scripts_filename = "%s.sh" % tf_filename
+
+        scripts_file = os.path.join(scripts_dir, scripts_filename)
+        if not os.path.exists(scripts_dir):
+            self.slog.logger.error("[%s] scripts dir does not exist",
+                                   scripts_dir)
+            os.mkdir(scripts_dir)
+
+        # Read our common.sh script.
+        fp = open("./scripts/common.sh", "r")
+        common_data = fp.read()
+        fp.close()
+
+        if user_init_script is not None:
+            if not os.path.exists(user_init_script):
+                self.slog.logger.error("Invalid path to init script [%s]",
+                                       user_init_script)
+            else:
+                fp = open(user_init_script, "r")
+                userdata = fp.read()
+                fp.close()
+
+                for line in userdata.splitlines():
+                    if line.startswith("#!"):
+                        continue
+                    fp.close()
+                    common_data += "\n" + line
+
+        fp = open(scripts_file, "w")
+        fp.write(common_data)
+        fp.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     def render_symphony_template(self,
@@ -512,6 +576,15 @@ class Helper(object):
             self.slog.logger.info("%s Does not exist. Creating it",
                                   subdir_path)
             os.mkdir(subdir_path)
+
+        # Create a subdirectory within the staging folder for
+        # keeping scripts.
+        scripts_dir = os.path.join(subdir_path, "scripts")
+        if not os.path.exists(scripts_dir):
+            self.slog.logger.info("%s Does not exist. Creating it",
+                                  scripts_dir)
+            os.mkdir(scripts_dir)
+
 
         self.slog.logger.info("Build cluster staging: Successful")
         return 0
@@ -604,8 +677,6 @@ class Helper(object):
 
         parserobj = tfparser.TFParser(cluster_staging_dir)
         parserobj.terraform_display_environments()
-
-
 
     def configure_terraform_environment(self, cluster_staging_dir):
         '''

@@ -8,6 +8,9 @@ resource "aws_instance" "spawn_instance_{{ cluster_name }}" {
     vpc_security_group_ids = ["{{ security_groups['all'] }}"]
     subnet_id = "{{ subnets['us-east-1b'] }}"
     key_name = "${aws_key_pair.spawn_keypair.key_name}"
+    {% if init_script is defined -%}
+    user_data = "${file("{{ init_script }}")}"
+    {%- endif %}
 
     root_block_device = {
         volume_type = "standard"
