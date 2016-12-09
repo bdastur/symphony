@@ -47,6 +47,12 @@ clusters:
         # while a elb_template will deploy the instances and put them behind the elb.
         cluster_template: basic_instance
 
+        # Specify the init script to run when the instance boots up.
+        # Specify the absoluate path to your script. It will be copied
+        # to the staging folder, and be part of the terraform template file.
+        init_script: "/tmp/testscript.sh"
+
+
         # Tags.
         # If the TF type allows tags, then you can specify them as below.
         # Tags help to identify your resources. For instance in AWS you can
