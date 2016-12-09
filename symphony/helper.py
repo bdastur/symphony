@@ -16,6 +16,7 @@ import subprocess
 import socket
 import paramiko
 import yaml
+import json
 import jinja2
 import utils.symphony_logger as logger
 try:
@@ -725,15 +726,17 @@ class Helper(object):
                         'service_dir', default_service_dir)
                     kwargs['hosts'] = services[service].get(
                         'hosts', default_hosts)
+                    kwargs['service_vars'] = services[service]
                 else:
                     service_dir = default_service_dir
                     kwargs['hosts'] = default_hosts
+                    kwargs['service_vars'] = {}
 
 
-            default_playbook_name = "site.yaml"
-            self.execute_ansible_playbook(service_dir,
-                                          default_playbook_name,
-                                          **kwargs)
+                default_playbook_name = "site.yaml"
+                self.execute_ansible_playbook(service_dir,
+                                              default_playbook_name,
+                                              **kwargs)
 
     def wait_for_ssh_connectivity(self,
                                   cluster_staging_dir,
@@ -801,6 +804,10 @@ class Helper(object):
             (kwargs['username'], kwargs['hosts'])
         private_key_option = "--private-key=%s" % kwargs['private_key']
 
+        # Set the Additional variables in cluster info.
+        service_vars = kwargs['service_vars']
+        service_vars = json.dumps(service_vars)
+
         # Set environment variables.
         os.environ['TERRAFORM_STATE_ROOT'] = kwargs['tf_staging']
         os.environ['ANSIBLE_HOST_KEY_CHECKING'] = "False"
@@ -808,6 +815,7 @@ class Helper(object):
 
         ansible_cmd = ["ansible-playbook", "-i", tf_dynamic_inventory,
                        playbook_name, "-e", extra_vars,
+                       "-e", service_vars,
                        private_key_option]
 
         sproc = subprocess.Popen(ansible_cmd,

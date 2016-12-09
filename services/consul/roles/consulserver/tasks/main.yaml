@@ -1,2 +1,21 @@
 - name: Check ssh connectivity
   ping:
+
+#- name: Debug 
+#  debug: 
+#    msg: "hostvars: {{ hostvars | to_nice_json}}"
+- name: Debug 
+  debug: 
+    msg: "hostvars: {{ hostvars }}"
+
+- name: Debug groups
+  debug:
+    msg: "Groups:   {{ groups }}"
+ 
+- name: Debug group consulcluster.
+  debug:
+    msg: "Consulcluster group: {{ groups['consul-cluster'] }}"
+
+- name: Debug service vars.
+  debug:
+    msg: "service vars: {{ consul_version }}, {{ consul_is_ui }}, {{ consul_install_consul_cli }}"
