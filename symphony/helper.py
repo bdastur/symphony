@@ -797,7 +797,8 @@ class Helper(object):
         print "playbook [%s, %s] hosts: %s" % \
             (playbook_path, playbook_name, kwargs['hosts'])
 
-        tf_dynamic_inventory = "../../../tf_ansible/terraform.py"
+        #tf_dynamic_inventory = "../../../tf_ansible/terraform.py"
+        tf_dynamic_inventory = "../../symphony/tf_inventory.py"
 
         # Set Ansible Options.
         extra_vars = "username=%s hosts=%s" % \

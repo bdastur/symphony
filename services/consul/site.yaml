@@ -6,3 +6,13 @@
   roles:
     - { role: "consulserver" }
 
+- name: Deploy Consul (server) cluster
+  hosts: "{{ hosts }}"
+  user: "{{ username }}"
+  sudo: "yes" 
+  sudo_user: root
+  roles:
+    - { role: "savagegus.consul" }
+
+
+
