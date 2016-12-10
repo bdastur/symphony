@@ -98,3 +98,10 @@ tf_accesskey*
 symphony_accesskey*
 .logs/*
 *teststaging*
+
+
+services/consul/roles/franklinkim.nginx/
+services/consul/roles/geerlingguy.nginx/
+services/consul/roles/joshualund.golang/
+services/consul/roles/savagegus.consul/
+

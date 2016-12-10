@@ -198,7 +198,6 @@ class TFParser(object):
         print table
         print "\n"
 
-
     def terraform_display_environments(self):
         '''
         API that displays the tf environments.

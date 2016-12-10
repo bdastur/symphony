@@ -19,3 +19,13 @@
 - name: Debug service vars.
   debug:
     msg: "service vars: {{ consul_version }}, {{ consul_is_ui }}, {{ consul_install_consul_cli }}"
+
+- name: Group vars.
+  debug:
+    msg: "Consulcluster group: {{ groups['consul-cluster'] }}"
+
+- name: group vars.
+  debug:
+    msg: "Group variables: {{ ipaddrs }}"
+
+       
