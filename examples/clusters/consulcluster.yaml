@@ -1,0 +1,54 @@
+---
+#--------------------------------------------
+# Consul Cluster.
+# 1. Consul server 
+#--------------------------------------------
+name: ConsulCluster
+environment: test_useast1 
+credentials_file: "/home/xyz/.aws/credentials"
+profile_name: "default"
+
+public_key_loc: "/tmp/symphonykey.pub"
+private_key_loc: "/tmp/symphonykey"
+connection_info:
+    username: "ec2-user"
+
+clusters:
+    consul:
+        name: consul-cluster
+        public_key_loc: "/tmp/symphonykey.pub"
+        private_key_loc: "/tmp/symphonykey"
+        cluster_size: 4
+        cluster_template: basic_instance
+        init_script: "/tmp/testscript.sh"
+
+        tags:
+            Project: "Consul"
+            ApplicationRole: "Test"
+            Name: "Consul-${count.index}"
+            Cluster: "Consulcluster"
+            Environment: "devtest"
+            BusinessUnit: "ACME"
+            OwnerEmail: "behzad_dastur"
+
+        connection_info:
+            username: "ec2-user"
+
+        services:
+            consul:
+                # Variables required by savagegus.consul role to configure 
+                # consul cluster.
+                consul_version: 0.7.1
+                consul_is_server: "true"
+                consul_datacenter: "testdc"
+                consul_bootstrap: "true"
+                consul_is_ui: true
+                consul_install_consul_cli: false 
+                consul_use_systemd: true
+                consul_bind_address: "{{ ansible_default_ipv4['address'] }}"
+                consul_advertise_address: "{{ ansible_default_ipv4['address'] }}"
+                consul_join_at_start: "true"
+                consul_servers: "{{ ipaddrs }}"
+                nginx_user: "ec2-user"
+
+
