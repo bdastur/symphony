@@ -90,9 +90,6 @@ class TFInventory(object):
                             else:
                                 inventory[hostgroup]['hosts'].append(hostname)
 
-
-
-
     def generate_server_info(self, hostvars):
         '''
         Populate the host specific info in hostvars
@@ -111,32 +108,6 @@ class TFInventory(object):
                         continue
 
                     # Populate hostvar attributes.
-                    '''
- {u'availability_zone': u'us-east-1b',
- u'ephemeral_block_device.#': u'0',
- u'public_ip': u'',
- u'public_dns': u'',
- u'tags.%': u'11', u'vpc_security_group_ids.#': u'1', u'id': u'i-9e518189',
- u'source_dest_check': u'true', u'monitoring': u'false',
- u'root_block_device.0.volume_size': u'10', u'tags.ApplicationRole': u'Test',
- u'subnet_id': u'subnet-b8214792', u'ebs_optimized': u'false', u'private_ip': u'100.122.33.49',
- u'iam_instance_profile': u'',
- u'tags.CreatorId': u'AIDAJLBHVAL35KAULWUB4',
- u'tags.PrincipalId': u'AIDAJLBHVAL35KAULWUB4',
- u'key_name': u'ConsulCluster-key', u'ami': u'ami-2e623239',
- u'ebs_block_device.#': u'0', u'tags.Project': u'Consul',
- u'vpc_security_group_ids.2704408213': u'sg-54e1602f', u'disable_api_termination': u'false',
- u'tags.CreatorName': u'behzad_dastur', u'root_block_device.0.delete_on_termination': u'true',
- u'user_data': u'11d38c4adda7c3dc94eef71d53a1c9ffd373c14c', u'tenancy': u'default',
- u'root_block_device.0.iops': u'0', u'tags.OwnerEmail': u'behzad_dastur',
- u'tags.Cluster': u'Consulcluster', u'security_groups.#': u'0',
- u'tags.Owner': u'behzad_dastur', u'root_block_device.#': u'1',
- u'tags.BusinessUnit': u'CPE', u'tags.Environment': u'devtest',
- u'instance_type': u't2.micro', u'network_interface_id': u'eni-86336878',
- u'root_block_device.0.volume_type': u'standard',
- u'private_dns': u'ip-100-122-33-49.ec2.internal',
- u'tags.Name': u'Consul-1', u'instance_state': u'running'}`
-                    '''
                     hostvars[hostname] = {}
                     if self.priv_ip_flag:
                         hostvars[hostname]['ansible_ssh_host'] = \
