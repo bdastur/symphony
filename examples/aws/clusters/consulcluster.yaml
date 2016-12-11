@@ -4,7 +4,7 @@
 # 1. Consul server 
 #--------------------------------------------
 name: ConsulCluster
-environment: test_useast1 
+environment: testaws_useast1 
 credentials_file: "/home/xyz/.aws/credentials"
 profile_name: "default"
 
@@ -18,7 +18,7 @@ clusters:
         name: consul-cluster
         public_key_loc: "/tmp/symphonykey.pub"
         private_key_loc: "/tmp/symphonykey"
-        cluster_size: 4
+        cluster_size: 3
         cluster_template: basic_instance
         init_script: "/tmp/testscript.sh"
 
@@ -36,19 +36,57 @@ clusters:
 
         services:
             consul:
-                # Variables required by savagegus.consul role to configure 
-                # consul cluster.
                 consul_version: 0.7.1
-                consul_is_server: "true"
+                consul_is_server: true
                 consul_datacenter: "testdc"
-                consul_bootstrap: "true"
+                consul_bootstrap: false
+                consul_bootstrap_expect: 3
+                consul_install_nginx: false
+                consul_install_nginx_config: false
+                consule_enable_nginx_config: false
                 consul_is_ui: true
+                consul_install_consulate: true
                 consul_install_consul_cli: false 
                 consul_use_systemd: true
                 consul_bind_address: "{{ ansible_default_ipv4['address'] }}"
+                consul_client_address: "{{ ansible_default_ipv4['address'] }}"
                 consul_advertise_address: "{{ ansible_default_ipv4['address'] }}"
                 consul_join_at_start: "true"
                 consul_servers: "{{ ipaddrs }}"
                 nginx_user: "ec2-user"
+    consulagent:
+        name: consul-agent
+        cluster_size: 1
+        cluster_template: basic_instance
+        init_script: "/tmp/testscript.sh"
+
+        tags:
+            Project: "Consul"
+            Name: "Consulagent-${count.index}"
+            Cluster: "Consul-agent-cluster"
+            Environment: "devtest"
+            BusinessUnit: "CPE"
+            OwnerEmail: "behzad_dastur"
+
+        connection_info:
+            username: "ec2-user"
+
+        services:
+            consul:
+                consul_version: 0.7.1
+                consul_is_server: false
+                consul_datacenter: "testdc"
+                consul_bootstrap: false
+                consul_install_nginx: false
+                consul_install_nginx_config: false
+                consul_enable_nginx_config: false
+                consul_is_ui: false
+                consul_install_consul_cli: false
+                consul_install_consulate: true
+                consul_use_systemd: true
+                consul_bind_address: "{{ ansible_default_ipv4['address'] }}"
+                consul_client_address: "{{ ansible_default_ipv4['address'] }}"
+                consul_advertise_address: "{{ ansible_default_ipv4['address'] }}"
+                consul_join_at_start: "false"
 
 
