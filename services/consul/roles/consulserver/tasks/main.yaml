@@ -24,6 +24,11 @@
   debug:
     msg: "Consulcluster group: {{ groups['consul-cluster'] }}"
 
+- name: Group vars. ip addr.
+  debug:
+    msg: "Consul cluster ip addr {{ hostvars[groups['consul-cluster'][0]]['ipaddrs'] }}"
+
+
 - name: group vars.
   debug:
     msg: "Group variables: {{ ipaddrs }}"
