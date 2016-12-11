@@ -4,8 +4,8 @@
 # 1. Consul server 
 #--------------------------------------------
 name: ConsulCluster
-environment: testaws_useast1 
-credentials_file: "/home/xyz/.aws/credentials"
+environment: awstest_useast1 
+credentials_file: "/home/bdastur/.aws/credentials"
 profile_name: "default"
 
 public_key_loc: "/tmp/symphonykey.pub"
@@ -65,7 +65,7 @@ clusters:
             Name: "Consulagent-${count.index}"
             Cluster: "Consul-agent-cluster"
             Environment: "devtest"
-            BusinessUnit: "CPE"
+            BusinessUnit: "ACME"
             OwnerEmail: "behzad_dastur"
 
         connection_info:
@@ -87,6 +87,7 @@ clusters:
                 consul_bind_address: "{{ ansible_default_ipv4['address'] }}"
                 consul_client_address: "{{ ansible_default_ipv4['address'] }}"
                 consul_advertise_address: "{{ ansible_default_ipv4['address'] }}"
-                consul_join_at_start: "false"
+                consul_join_at_start: true
+                consul_servers: "{{ hostvars[groups['consul-cluster'][0]]['ipaddrs'] }}" 
 
 
