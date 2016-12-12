@@ -489,21 +489,6 @@ class Helper(object):
         fp.write(common_data)
         fp.close()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def render_symphony_template(self,
                                  template_name,
                                  tf_filename,
@@ -674,7 +659,6 @@ class Helper(object):
         Given the path to staging dir, walk through the directory
         and display the resources created for each environment
         '''
-        print "BRD: Display tf env: ", cluster_staging_dir
 
         parserobj = tfparser.TFParser(cluster_staging_dir)
         parserobj.terraform_display_environments()
