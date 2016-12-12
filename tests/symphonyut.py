@@ -5,8 +5,10 @@
 Unit tests for All symphony modules.
 '''
 
+import os
 import unittest
 import utils.symphony_logger as logger
+import utils.consulapi as consulapi
 import symphony.tfparser as tfparser
 import symphony.helper as helper
 
@@ -95,7 +97,6 @@ class SymphonyUt(unittest.TestCase):
         self.failUnless(helperobj.valid is False)
         obj['config'].close()
 
-
     def test_normalize_data(self):
         print "Test Normalizing API"
         obj = {}
@@ -134,6 +135,14 @@ class SymphonyUt(unittest.TestCase):
         helperobj.perform_operation()
 
 
+class ConsulAPIUt(unittest.TestCase):
+    def test_basic(self):
+        host = os.environ.get('CONSULHOST', 'localhost')
+        cclient = consulapi.ConsulAPI(host=host)
+        (ret, members) = cclient.list_nodes()
+        self.failUnless(ret == 0)
+        for member in members:
+            print member['Name'], member['Tags']['role']
 
 
 
