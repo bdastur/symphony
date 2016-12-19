@@ -104,4 +104,5 @@ services/consul/roles/franklinkim.nginx/
 services/consul/roles/geerlingguy.nginx/
 services/consul/roles/joshualund.golang/
 services/consul/roles/savagegus.consul/
+services/logstash/roles/geerlingguy.logstash/
 
