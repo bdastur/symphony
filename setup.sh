@@ -22,8 +22,8 @@ tf_ansible_localdir="../tf_ansible"
 
 # Ansible Repo.
 ansible_repo="http://github.com/ansible/ansible.git"
-ansible_branch="stable-1.9"
-ansible_localdir="../ansible_stable19"
+ansible_branch="stable-2.2"
+ansible_localdir="../ansible_stable22"
 
 # Function to display logs to console and
 # file.
