@@ -1,0 +1,9 @@
+- name: Deploy Logstash (server) cluster
+  hosts: "{{ hosts }}"
+  user: "{{ username }}"
+  sudo: "yes" 
+  sudo_user: root
+  roles:
+    - { role: "geerlingguy.elasticsearch" }
+
+

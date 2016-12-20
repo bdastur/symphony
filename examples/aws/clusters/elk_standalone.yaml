@@ -41,6 +41,11 @@ clusters:
                 logstash_local_syslog_path: /var/log/syslog
                 logstash_monitor_local_syslog: true
                 logstash_enabled_on_boot: yes
+            elasticsearch:
+                elasticsearch_network_host: "{{ ansible_default_ipv4['address'] }}"
+                elasticsearch_http_port: 9200
+                elasticsearch_script_inline: true
+                elasticsearch_script_indexed: true
 
 
 
