@@ -105,4 +105,6 @@ services/consul/roles/geerlingguy.nginx/
 services/consul/roles/joshualund.golang/
 services/consul/roles/savagegus.consul/
 services/logstash/roles/geerlingguy.logstash/
-
+services/elasticsearch/roles/geerlingguy.elasticsearch/
+services/elasticsearch/roles/geerlingguy.java/
+services/elasticsearch/site.retry
