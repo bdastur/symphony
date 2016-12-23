@@ -1,0 +1,11 @@
+- name: Create Logstash configuration file.
+  template:
+    src: sample.conf.j2 
+    dest: /etc/logstash/conf.d/sample.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart logstash
+  tags:
+    - logstash-config
+
