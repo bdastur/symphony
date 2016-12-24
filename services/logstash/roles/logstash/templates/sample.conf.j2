@@ -1,0 +1,39 @@
+input {
+  udp {
+    port => {{ listen_port| default(5044) }}
+    buffer_size => 1452
+    codec => collectd { }
+    type => "collectd"
+  }
+}
+
+filter {
+    if [type] == "collectd" {
+        mutate {
+            add_field => ["name", "collectd"]
+        }
+        if ("free" in [type_instance]) {
+            mutate {
+                add_field => ["free-memory",value]
+            }
+            grok {
+                match => {"value" => "%{NUMBER:freemem}"}
+            }
+        }
+    }
+}
+
+
+output {
+  file { 
+     codec => "json"
+     path => "{{ logstash_outputfile }}" 
+  }
+  elasticsearch {
+    hosts => ["{{ elasticsearch_host_url }}"]
+    index => "%{[@metadata][beat]}-%{+YYYY.MM.dd}"
+    document_type => "%{[@metadata][type]}"
+  }
+
+}
+

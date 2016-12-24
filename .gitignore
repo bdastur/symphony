@@ -108,3 +108,4 @@ services/logstash/roles/geerlingguy.logstash/
 services/elasticsearch/roles/geerlingguy.elasticsearch/
 services/elasticsearch/roles/geerlingguy.java/
 services/elasticsearch/site.retry
+*site.retry*
