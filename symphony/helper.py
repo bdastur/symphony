@@ -44,16 +44,18 @@ class Helper(object):
 
         self.slog = logger.Logger(name="Helper")
 
-        if operobj['operation'] == "build":
-            self.valid = self.__populate_build_operation(operobj)
-        elif operobj['operation'] == "deploy":
-            self.valid = self.__populate_deploy_operation(operobj)
-        elif operobj['operation'] == "configure":
-            self.valid = self.__populate_configure_operation(operobj)
-        elif operobj['operation'] == "destroy":
-            self.valid = self.__populate_destroy_operation(operobj)
-        elif operobj['operation'] == "list":
-            self.valid = self.__populate_list_operation(operobj)
+        self.valid = self.__populate_params(operobj)
+
+        #if operobj['operation'] == "build":
+        #    self.valid = self.__populate_build_operation(operobj)
+        #elif operobj['operation'] == "deploy":
+        #    self.valid = self.__populate_deploy_operation(operobj)
+        #elif operobj['operation'] == "configure":
+        #    self.valid = self.__populate_configure_operation(operobj)
+        #elif operobj['operation'] == "destroy":
+        #    self.valid = self.__populate_destroy_operation(operobj)
+        #elif operobj['operation'] == "list":
+        #    self.valid = self.__populate_list_operation(operobj)
 
         self.slog.logger.info("Symphony Helper: Initialized")
 
@@ -188,6 +190,65 @@ class Helper(object):
                 self.slog.logger.error("%s not found in normalized data",
                                        item)
         return data
+
+    def __populate_params(self, operobj):
+        '''
+        Populate the operation params
+        '''
+        required_params = {
+            'build': ['config', 'staging', 'environment', 'template'],
+            'configure': ['config', 'environment', 'staging'],
+            'deploy': ['staging'],
+            'destroy': ['staging'],
+            'list': ['staging']
+        }
+        operation = operobj['operation']
+        for key in required_params[operation]:
+            if key not in operobj.keys():
+                self.slog.logger.error("Missing attribute %s", key)
+                return False
+            if key == 'staging':
+                self.tf_staging = operobj[key]
+
+                # Validate staging dir.
+                if os.path.exists(self.tf_staging) and \
+                        not os.path.isdir(self.tf_staging):
+                    self.slog.logger.error("Staging path cannot be a file")
+                    return False
+
+            elif key == 'config':
+                self.cluster_config = operobj[key]
+                # Parse the cluster config.
+                self.parsed_config = \
+                    self.parse_cluster_configuration(self.cluster_config)
+                if self.parsed_config is None:
+                    self.slog.logger.error("Failed to parse [%s]",
+                                           self.cluster_config)
+                    return False
+                self.slog.logger.debug("Parsed config: [%s]",
+                                       self.parsed_config)
+
+            elif key == 'environment':
+                self.env_path = operobj[key]
+                # Parse the environment file.
+                self.parsed_env = \
+                    self.parse_environment_configuration(self.env_path)
+                if self.parsed_env is None:
+                    self.slog.logger.error("Failed to parse [%s]",
+                                           self.env_path)
+                    return False
+                self.slog.logger.debug("Parsed env: [%s]", self.parsed_env)
+
+            elif key == 'template':
+                self.template_path = operobj['template']
+                # Validate template path.
+                if not os.path.exists(self.template_path) or \
+                        not os.path.isdir(self.template_path):
+                    self.slog.logger.error("Ivalid template path [%s]",
+                                           self.template_path)
+                    return False
+
+        return True
 
     def __populate_build_operation(self, operobj):
         '''

@@ -36,7 +36,6 @@ class TFParserUt(unittest.TestCase):
         print "Resource types: ", restypes
 
 
-
 class SymphonyUt(unittest.TestCase):
     def test_basic(self):
         print "Test Basic"
