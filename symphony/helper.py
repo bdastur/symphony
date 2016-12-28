@@ -14,9 +14,9 @@ import os
 import time
 import subprocess
 import socket
-import paramiko
-import yaml
 import json
+import yaml
+import paramiko
 import jinja2
 import utils.symphony_logger as logger
 try:
@@ -26,6 +26,14 @@ except ImportError:
 
 
 class Helper(object):
+    '''
+    The helper class is the main work horse for symphony
+    currently. It needs to be refactored into smaller more
+    modular classes - eg ConfigParser, TFHandler, AnsibleHandler
+    ALso the goal is to make it pluggable so we can enhance the functionality
+    to add other handlers like Chef, scripts, or custom handlers.
+    '''
+
     def __init__(self, operobj):
         '''
         Initialize the Helper.
@@ -34,6 +42,7 @@ class Helper(object):
         :param operation: An object that defines the operations
         '''
         self.cluster_config = None
+        self.tf_cluster_staging = None
         self.tf_staging = None
         self.env_path = None
         self.parsed_config = None
@@ -160,7 +169,7 @@ class Helper(object):
                                                 None))
 
             data['clusters'][cluster]['tags'] = \
-                cobj.get('tags',  self.parsed_config.get('tags', None))
+                cobj.get('tags', self.parsed_config.get('tags', None))
 
             data['clusters'][cluster]['amis'] = \
                 cobj.get('amis',
@@ -169,8 +178,8 @@ class Helper(object):
                              self.parsed_env.get('amis', None)))
 
             data['clusters'][cluster]['subnets'] = self.parsed_config.get(
-                    'subnets',
-                    self.parsed_env.get('subnets', None))
+                'subnets',
+                self.parsed_env.get('subnets', None))
 
             data['clusters'][cluster]['security_groups'] = \
                 self.parsed_config.get('security_groups',
@@ -471,7 +480,7 @@ class Helper(object):
                 return 1
 
             # Create the staging directory
-            ret = self.build_tf_cluster_staging_directory(self.tf_staging)
+            ret = self.build_cluster_staging_directory(self.tf_staging)
             if ret != 0:
                 return ret
 
@@ -527,28 +536,28 @@ class Helper(object):
             os.mkdir(scripts_dir)
 
         # Read our common.sh script.
-        fp = open("./scripts/common.sh", "r")
-        common_data = fp.read()
-        fp.close()
+        filep = open("./scripts/common.sh", "r")
+        common_data = filep.read()
+        filep.close()
 
         if user_init_script is not None:
             if not os.path.exists(user_init_script):
                 self.slog.logger.error("Invalid path to init script [%s]",
                                        user_init_script)
             else:
-                fp = open(user_init_script, "r")
-                userdata = fp.read()
-                fp.close()
+                filep = open(user_init_script, "r")
+                userdata = filep.read()
+                filep.close()
 
                 for line in userdata.splitlines():
                     if line.startswith("#!"):
                         continue
-                    fp.close()
+                    filep.close()
                     common_data += "\n" + line
 
-        fp = open(scripts_file, "w")
-        fp.write(common_data)
-        fp.close()
+        filep = open(scripts_file, "w")
+        filep.write(common_data)
+        filep.close()
 
     def render_symphony_template(self,
                                  template_name,
@@ -599,7 +608,7 @@ class Helper(object):
 
         return rendered_data
 
-    def build_tf_cluster_staging_directory(self, userenv_dir):
+    def build_cluster_staging_directory(self, userenv_dir):
         '''
         Create a new terraform staging folder. Generate a terraform
         definition file based on the rendered template
@@ -799,8 +808,8 @@ class Helper(object):
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         ssh_hosts = []
-        for env in instinfo.keys():
-            for reskey, resval in instinfo[env].items():
+        for env in instinfo:
+            for _, resval in instinfo[env].items():
                 ssh_hosts.append(resval['private_ip'])
 
         retry_count = 0
@@ -874,7 +883,5 @@ class Helper(object):
 
             sys.stdout.write(nextline)
             sys.stdout.flush()
-
-
 
 
