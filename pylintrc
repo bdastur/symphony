@@ -12,10 +12,11 @@ max-statements=150
 max-returns=9
 disable=W0141
 max-module-lines=2000
+max-attributes=40
 
 
 [MESSAGE CONTROL]
-disable=unused-argument, no-self-use, import-error, too-many-arguments, relative-import
+disable=unused-argument, no-self-use, import-error, too-many-arguments, relative-import, trailing-newlines 
 
 
 [SIMILARITIES]
