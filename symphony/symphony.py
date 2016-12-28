@@ -13,8 +13,10 @@ import argparse
 import helper
 
 
-
 class SymphonyCli(object):
+    '''
+    Symphoncy CLI Handler.
+    '''
     def __init__(self, args):
         self.namespace = self.__build_parser(args)
 
@@ -39,9 +41,9 @@ class SymphonyCli(object):
                 # Build Operation Options.
 
                 parser = argparse.ArgumentParser(
-                   prog="symphony",
-                   formatter_class=argparse.RawTextHelpFormatter,
-                   description=self.show_build_help())
+                    prog="symphony",
+                    formatter_class=argparse.RawTextHelpFormatter,
+                    description=self.show_build_help())
 
                 parser.add_argument("--config",
                                     required=True,
@@ -269,6 +271,10 @@ class SymphonyCli(object):
 
 
 def main():
+    '''
+    The Symphony CLI main Runner.
+    Parse the CLI, and invoke the helper to perform the operation.
+    '''
     clihandler = SymphonyCli(sys.argv)
     print "Namespace: ", clihandler.namespace
 
