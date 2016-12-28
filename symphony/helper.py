@@ -33,7 +33,6 @@ class Helper(object):
     ALso the goal is to make it pluggable so we can enhance the functionality
     to add other handlers like Chef, scripts, or custom handlers.
     '''
-
     def __init__(self, operobj):
         '''
         Initialize the Helper.
@@ -52,20 +51,7 @@ class Helper(object):
         self.operation = operobj['operation']
 
         self.slog = logger.Logger(name="Helper")
-
         self.valid = self.__populate_params(operobj)
-
-        #if operobj['operation'] == "build":
-        #    self.valid = self.__populate_build_operation(operobj)
-        #elif operobj['operation'] == "deploy":
-        #    self.valid = self.__populate_deploy_operation(operobj)
-        #elif operobj['operation'] == "configure":
-        #    self.valid = self.__populate_configure_operation(operobj)
-        #elif operobj['operation'] == "destroy":
-        #    self.valid = self.__populate_destroy_operation(operobj)
-        #elif operobj['operation'] == "list":
-        #    self.valid = self.__populate_list_operation(operobj)
-
         self.slog.logger.info("Symphony Helper: Initialized")
 
     def normalize_parsed_configuration(self):
@@ -256,152 +242,6 @@ class Helper(object):
                     self.slog.logger.error("Ivalid template path [%s]",
                                            self.template_path)
                     return False
-
-        return True
-
-    def __populate_build_operation(self, operobj):
-        '''
-        Populate build operation
-        '''
-
-        # Read the user input (cluster config file, staging loc,
-        # environment path)
-        self.slog.logger.info("Helper: Build operation populate")
-        try:
-            self.cluster_config = operobj['config']
-            self.tf_staging = operobj['staging']
-            self.env_path = operobj['environment']
-            self.template_path = operobj['template']
-        except KeyError as keyerror:
-            self.slog.logger.error("Key not found [%s]", keyerror)
-            return False
-
-        # Parse the cluster config.
-        self.parsed_config = \
-            self.parse_cluster_configuration(self.cluster_config)
-        if self.parsed_config is None:
-            self.slog.logger.error("Failed to parse [%s]",
-                                   self.cluster_config)
-            return False
-        self.slog.logger.debug("Parsed config: [%s]", self.parsed_config)
-
-        # Parse the environment file.
-        self.parsed_env = \
-            self.parse_environment_configuration(self.env_path)
-        if self.parsed_env is None:
-            self.slog.logger.error("Failed to parse [%s]",
-                                   self.env_path)
-            return False
-        self.slog.logger.debug("Parsed env: [%s]", self.parsed_env)
-
-        # Validate staging dir.
-        if os.path.exists(self.tf_staging) and \
-                not os.path.isdir(self.tf_staging):
-            self.slog.logger.error("Staging path cannot be a file")
-            return False
-
-        # Validate template path.
-        if not os.path.exists(self.template_path) or \
-                not os.path.isdir(self.template_path):
-            self.slog.logger.error("Ivalid template path [%s]",
-                                   self.template_path)
-            return False
-
-        return True
-
-    def __populate_configure_operation(self, operobj):
-        '''
-        Populate config operation
-        '''
-
-        # Read the user input (cluster config file and staging location)
-        self.slog.logger.info("Helper: configure operation populate")
-        try:
-            self.cluster_config = operobj['config']
-            self.env_path = operobj['environment']
-            self.tf_staging = operobj['staging']
-        except KeyError as keyerror:
-            self.slog.logger.error("Key not found [%s]", keyerror)
-            return False
-
-        # Parse the cluster config.
-        self.parsed_config = \
-            self.parse_cluster_configuration(self.cluster_config)
-        if self.parsed_config is None:
-            self.slog.logger.error("Failed to parse [%s]",
-                                   self.cluster_config)
-
-        # Parse the environment file.
-        self.parsed_env = \
-            self.parse_environment_configuration(self.env_path)
-        if self.parsed_env is None:
-            self.slog.logger.error("Failed to parse [%s]",
-                                   self.env_path)
-            return False
-        self.slog.logger.debug("Parsed env: [%s]", self.parsed_env)
-
-        return True
-
-    def __populate_deploy_operation(self, operobj):
-        '''
-        Populate deploy operation
-        '''
-        self.slog.logger.info("Helper: Deploy operation populate")
-
-        # Read the user input (staging location)
-        try:
-            self.tf_staging = operobj['staging']
-        except KeyError as keyerror:
-            self.slog.logger.error("Key not found [%s]", keyerror)
-            return False
-
-        if not os.path.exists(self.tf_staging) or \
-                not os.path.isdir(self.tf_staging):
-            self.slog.logger.error("Invalid staging location %s",
-                                   self.tf_staging)
-            return False
-
-        return True
-
-    def __populate_list_operation(self, operobj):
-        '''
-        Populate list operation
-        '''
-        print "List: ", operobj
-
-        # Read the user input (staging location)
-        try:
-            self.tf_staging = operobj['staging']
-        except KeyError as keyerror:
-            self.slog.logger.error("Key not found [%s]", keyerror)
-            return False
-
-        if not os.path.exists(self.tf_staging) or \
-                not os.path.isdir(self.tf_staging):
-            self.slog.logger.error("Invalid staging location %s",
-                                   self.tf_staging)
-            return False
-
-        return True
-
-    def __populate_destroy_operation(self, operobj):
-        '''
-        Populate destroy operation params
-        '''
-        self.slog.logger.info("Helper: Destroy operation populate")
-
-        # Read the user input(staging location)
-        try:
-            self.tf_staging = operobj['staging']
-        except KeyError as keyerror:
-            self.slog.logger.error("Key not found [%s]", keyerror)
-            return False
-
-        if not os.path.exists(self.tf_staging) or \
-                not os.path.isdir(self.tf_staging):
-            self.slog.logger.error("Invalid staging location: %s",
-                                   self.tf_staging)
-            return False
 
         return True
 
