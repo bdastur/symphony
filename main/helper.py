@@ -19,10 +19,7 @@ import yaml
 import paramiko
 import jinja2
 import utils.symphony_logger as logger
-try:
-    import symphony.tfparser as tfparser
-except ImportError:
-    import tfparser
+import main.tfparser as tfparser
 
 
 class Helper(object):
@@ -692,7 +689,7 @@ class Helper(object):
             (playbook_path, playbook_name, kwargs['hosts'])
 
         #tf_dynamic_inventory = "../../../tf_ansible/terraform.py"
-        tf_dynamic_inventory = "../../symphony/tf_inventory.py"
+        tf_dynamic_inventory = "../../main/tf_inventory.py"
 
         # Set Ansible Options.
         extra_vars = "username=%s hosts=%s" % \

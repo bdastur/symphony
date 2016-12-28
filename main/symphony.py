@@ -10,7 +10,7 @@ Symphony:
 
 import sys
 import argparse
-import helper
+import main.helper as helper
 
 
 class SymphonyCli(object):

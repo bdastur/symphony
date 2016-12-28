@@ -9,16 +9,8 @@ import sys
 import os
 import argparse
 import json
-
-try:
-    import symphony.tfparser as tfparser
-except ImportError:
-    import tfparser
-
-try:
-    import utils.symphony_logger as logger
-except ImportError:
-    import symphony_logger as logger
+import main.tfparser as tfparser
+import utils.symphony_logger as logger
 
 
 class TFInventory(object):
