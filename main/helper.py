@@ -142,6 +142,12 @@ class Helper(object):
                 cobj.get('public_key_loc',
                          self.parsed_config.get('public_key_loc',
                                                 default['public_key_loc']))
+
+            data['clusters'][cluster]['vpc_id'] = \
+                self.parsed_config.get('vpc',
+                                       self.parsed_env.get('vpc',
+                                                           None))
+
             data['clusters'][cluster]['private_key_loc'] = \
                 cobj.get('private_key_loc',
                          self.parsed_config.get('private_key_loc',
@@ -164,10 +170,18 @@ class Helper(object):
                 'subnets',
                 self.parsed_env.get('subnets', None))
 
+            # parse and save preconfigured security groups and
+            # user provided security groups.
             data['clusters'][cluster]['security_groups'] = \
                 self.parsed_config.get('security_groups',
                                        self.parsed_env.get(
                                            'security_groups', None))
+
+            # Check to see if user specific security group rules.
+            if cobj.get('user_security_groups', None) is not None:
+                user_sg_info = cobj.get('user_security_groups')
+                data['clusters'][cluster]['user_security_groups'] = \
+                    user_sg_info
 
             data['clusters'][cluster]['user_init_script'] = \
                 cobj.get('init_script', None)
@@ -181,6 +195,7 @@ class Helper(object):
             if item not in data.keys():
                 self.slog.logger.error("%s not found in normalized data",
                                        item)
+
         return data
 
     def __populate_params(self, operobj):
@@ -213,6 +228,7 @@ class Helper(object):
                 # Parse the cluster config.
                 self.parsed_config = \
                     self.parse_cluster_configuration(self.cluster_config)
+                print "Parsed config: ", self.parsed_config
                 if self.parsed_config is None:
                     self.slog.logger.error("Failed to parse [%s]",
                                            self.cluster_config)
@@ -246,7 +262,6 @@ class Helper(object):
         '''
         Parse the cluster configuration file.
         '''
-
         try:
             parsed_data = yaml.safe_load(config_file)
         except yaml.YAMLError as yamlerror:

@@ -1,0 +1,73 @@
+#--------------------------------------
+# AWS Instance.
+
+
+{% if user_security_groups is defined %}
+{% for security_group in user_security_groups %}
+resource "aws_security_group" "{{ security_group.name }}" {
+    name = "{{ security_group.name }}"
+    description = "Custom generated security group - cluster {{ cluster_name }}"
+    vpc_id = "{{ vpc_id }}"
+
+    {% for rule in security_group.ingress %}
+        ingress {
+            from_port = {{ rule.from_port }}
+            to_port = {{ rule.to_port }}
+            protocol = "{{ rule.protocol }}"
+            cidr_blocks = [{% for cidr in rule.cidr_blocks %}"{{ cidr }}"{% if not loop.last %},{% endif %}{% endfor %}]
+        }
+    {% endfor %}
+
+    {% for rule in security_group.egress %}
+        egress {
+            from_port = {{ rule.from_port }}
+            to_port = {{ rule.to_port }}
+            protocol = "{{ rule.protocol }}"
+            cidr_blocks = [{% for cidr in rule.cidr_blocks %}"{{ cidr }}"{% if not loop.last %},{% endif %}{% endfor %}] 
+        }
+    {% endfor %}
+
+    tags = {
+    {%- for tag in tags.keys() %}
+        {{ tag }} = "{{ tags[tag] }}"
+    {%- endfor %}
+    }
+
+}   
+
+{% endfor %}
+{% endif %}
+
+
+resource "aws_instance" "spawn_instance_{{ cluster_name }}" {
+    count = "{{ cluster_size }}"
+    instance_type = "{{ instance_type|default('t2.micro') }}"
+    ami = "{{ amis['centos7'] }}" 
+    {% if user_security_groups is defined %}
+    vpc_security_group_ids =[{% for sg in user_security_groups %}"${aws_security_group.{{ sg.name }}.id}"{% if not loop.last %},{% endif %}{% endfor %}]
+    {% else %}
+    vpc_security_group_ids = ["{{ security_groups['all'] }}"]
+    {% endif %}
+    subnet_id = "{{ subnets['us-east-1b'] }}"
+    key_name = "${aws_key_pair.spawn_keypair.key_name}"
+    {% if init_script is defined -%}
+    user_data = "${file("{{ init_script }}")}"
+    {%- endif %}
+
+    root_block_device = {
+        volume_type = "standard"
+        volume_size = "{{ volume_size | default('10') }}"
+        delete_on_termination = "true"
+    }
+
+    tags = {
+    {%- for tag in tags.keys() %}
+        {{ tag }} = "{{ tags[tag] }}"
+    {%- endfor %}
+    }
+}
+
+output "{{ cluster_name }}" {
+    value = ["${aws_instance.spawn_instance_{{ cluster_name }}.*.private_ip}"]
+}
+
