@@ -15,7 +15,6 @@ import time
 import subprocess
 import socket
 import json
-import yaml
 import paramiko
 import jinja2
 import utils.symphony_logger as logger
@@ -280,7 +279,9 @@ class Helper(object):
             # Build Operation.
 
             # Normalize our parsed configuration.
-            self.normalized_data = self.normalize_parsed_configuration()
+            self.normalized_data = \
+                self.cfgparser.normalize_parsed_configuration(
+                    self.parsed_config, self.parsed_env)
             print "Build operation"
             if not os.path.exists(self.template_path) or \
                     not os.path.isdir(self.template_path):
@@ -320,7 +321,9 @@ class Helper(object):
             self.deploy_terraform_environment(self.tf_staging)
         elif self.operation == "configure":
             print "Configure operation"
-            self.normalized_data = self.normalize_parsed_configuration()
+            self.normalized_data = \
+                self.cfgparser.normalize_parsed_configuration(
+                    self.parsed_config, self.parsed_env)
             self.configure_terraform_environment(self.tf_staging)
         elif self.operation == "destroy":
             print "Destroy operation"
