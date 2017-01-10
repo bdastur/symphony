@@ -19,6 +19,7 @@ import yaml
 import paramiko
 import jinja2
 import utils.symphony_logger as logger
+import main.config_parser as config_parser
 import main.tfparser as tfparser
 
 
@@ -48,6 +49,7 @@ class Helper(object):
         self.operation = operobj['operation']
 
         self.slog = logger.Logger(name="Helper")
+        self.cfgparser = config_parser.ConfigParser()
         self.valid = self.__populate_params(operobj)
         self.slog.logger.info("Symphony Helper: Initialized")
 
@@ -227,7 +229,8 @@ class Helper(object):
                 self.cluster_config = operobj[key]
                 # Parse the cluster config.
                 self.parsed_config = \
-                    self.parse_cluster_configuration(self.cluster_config)
+                    self.cfgparser.parse_cluster_configuration(
+                        self.cluster_config)
                 print "Parsed config: ", self.parsed_config
                 if self.parsed_config is None:
                     self.slog.logger.error("Failed to parse [%s]",
@@ -239,8 +242,15 @@ class Helper(object):
             elif key == 'environment':
                 self.env_path = operobj[key]
                 # Parse the environment file.
+                try:
+                    env_name = self.parsed_config['environment']
+                except KeyError:
+                    self.slog.logger.error(
+                        "Parsed config does not have `environment` key")
+                    return False
                 self.parsed_env = \
-                    self.parse_environment_configuration(self.env_path)
+                    self.cfgparser.parse_environment_configuration(
+                        self.env_path, env_name)
                 if self.parsed_env is None:
                     self.slog.logger.error("Failed to parse [%s]",
                                            self.env_path)
