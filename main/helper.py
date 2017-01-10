@@ -268,59 +268,6 @@ class Helper(object):
 
         return True
 
-    def parse_cluster_configuration(self, config_file):
-        '''
-        Parse the cluster configuration file.
-        '''
-        try:
-            parsed_data = yaml.safe_load(config_file)
-        except yaml.YAMLError as yamlerror:
-            self.slog.logger.error("Failed to parse cluster config [%s] [%s]",
-                                   config_file, yamlerror)
-            return None
-
-        return parsed_data
-
-    def parse_environment_configuration(self, env_path):
-        '''
-        Parse the environment configuration file.
-        '''
-        # Check for valid path.
-        if not os.path.exists(env_path) or \
-                not os.path.isdir(env_path):
-            self.slog.logger.error("Invalid environment path [%s]",
-                                   env_path)
-            return None
-
-        try:
-            env_name = self.parsed_config['environment']
-        except KeyError:
-            self.slog.logger.error(
-                "Parsed config does not have `environment` key")
-            return None
-
-        envfile = os.path.join(env_path, env_name) + ".yaml"
-        if not os.path.exists(envfile):
-            self.slog.logger.error("[%s] Environment file not found",
-                                   envfile)
-            return None
-
-        try:
-            envfp = open(envfile, "r")
-        except IOError as ioerror:
-            self.slog.logger.error("Failed to open %s [%s]",
-                                   envfile, ioerror)
-            return None
-
-        try:
-            parsed_data = yaml.safe_load(envfp)
-        except yaml.YAMLError as yamlerror:
-            self.slog.logger.error("Failed to parse env config [%s] [%s]",
-                                   envfile, yamlerror)
-            return None
-
-        return parsed_data
-
     def perform_operation(self):
         '''
         Perform the build, deploy, configure, destroy or list operation.
