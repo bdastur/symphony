@@ -1,7 +1,6 @@
 #--------------------------------------
 # AWS Instance.
 
-
 {% if user_security_groups is defined %}
 {% for security_group in user_security_groups %}
 resource "aws_security_group" "{{ security_group.name }}" {
@@ -43,12 +42,16 @@ resource "aws_instance" "spawn_instance_{{ cluster_name }}" {
     count = "{{ cluster_size }}"
     instance_type = "{{ instance_type|default('t2.micro') }}"
     ami = "{{ amis['centos7'] }}" 
-    {% if user_security_groups is defined %}
+    {%- if user_security_groups is defined %}
     vpc_security_group_ids =[{% for sg in user_security_groups %}"${aws_security_group.{{ sg.name }}.id}"{% if not loop.last %},{% endif %}{% endfor %}]
     {% else %}
     vpc_security_group_ids = ["{{ security_groups['all'] }}"]
-    {% endif %}
-    subnet_id = "{{ subnets['us-east-1b'] }}"
+    {% endif -%}
+    {% if network_type == "private" -%}
+        subnet_id = "{{ subnets['private']['us-east-1b'] }}"
+    {% else -%}
+        subnet_id = "{{ subnets['public']['us-east-1b'] }}"
+    {% endif -%}
     key_name = "${aws_key_pair.spawn_keypair.key_name}"
     {% if init_script is defined -%}
     user_data = "${file("{{ init_script }}")}"
