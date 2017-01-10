@@ -96,6 +96,7 @@ class ConfigParser(object):
         default['cluster_size'] = 1
         default['instance_type'] = "t2.micro"
         default['cluster_name'] = "symphony-default-cluster"
+        default['network_type'] = "private"
 
         data = {}
 
@@ -146,6 +147,8 @@ class ConfigParser(object):
                 cobj.get('cluster_size', default['cluster_size'])
             data['clusters'][cluster]['instance_type'] = \
                 cobj.get('instance_type', default['instance_type'])
+            data['clusters'][cluster]['network_type'] = \
+                cobj.get('network_type', default['network_type'])
             data['clusters'][cluster]['public_key_loc'] = \
                 cobj.get('public_key_loc',
                          parsed_config.get('public_key_loc',

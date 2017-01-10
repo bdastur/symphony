@@ -6,7 +6,7 @@ resource "aws_instance" "spawn_instance_{{ cluster_name }}" {
     instance_type = "{{ instance_type|default('t2.micro') }}"
     ami = "{{ amis['centos7'] }}" 
     vpc_security_group_ids = ["{{ security_groups['all'] }}"]
-    subnet_id = "{{ subnets['us-east-1b'] }}"
+    subnet_id = "{{ subnets['private']['us-east-1b'] }}"
     key_name = "${aws_key_pair.spawn_keypair.key_name}"
     {% if init_script is defined -%}
     user_data = "${file("{{ init_script }}")}"
