@@ -194,6 +194,11 @@ class ConfigParser(object):
                 data['clusters'][cluster]['user_security_groups'] = \
                     user_sg_info
 
+            # Check to see if loadbalancer config is specified.
+            if cobj.get('loadbalancer', None) is not None:
+                lb_info = cobj.get('loadbalancer')
+                data['clusters'][cluster]['loadbalancer'] = lb_info
+
             data['clusters'][cluster]['user_init_script'] = \
                 cobj.get('init_script', None)
 
