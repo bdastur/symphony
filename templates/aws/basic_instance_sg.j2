@@ -70,6 +70,55 @@ resource "aws_instance" "spawn_instance_{{ cluster_name }}" {
     }
 }
 
+
+
+{% if loadbalancer is defined %}
+resource "aws_elb" "{{ loadbalancer.name }}" {
+    name = "{{ loadbalancer.name }}"
+    instances = ["${aws_instance.spawn_instance_{{ cluster_name }}.*.id}"]
+    subnets = ["{{ subnets['private']['us-east-1b'] }}", "{{ subnets['private']['us-east-1c'] }}"]
+
+    {%- if user_security_groups is defined %}
+    security_groups =[{% for sg in user_security_groups %}"${aws_security_group.{{ sg.name }}.id}"{% if not loop.last %},{% endif %}{% endfor %}]
+    {% else %}
+    security_groups = ["{{ security_groups['all'] }}"]
+    {% endif -%}
+    internal = {{ loadbalancer.internal }}
+    {% for listener in loadbalancer.listeners %}
+    listener {
+        instance_port = {{ listener.instance_port }}
+        instance_protocol = "{{ listener.instance_protocol }}"
+        lb_port = {{ listener.lb_port }}
+        lb_protocol = "{{ listener.lb_protocol }}"
+        {%- if listener.ssl_certificate_id is defined %}
+        ssl_certificate_id = " {{ listener.ssl_certificate_id }}"
+        {%- endif %}
+    }
+    {% endfor %}
+
+    {% for check in loadbalancer.health_checks %}
+    health_check {
+        healthy_threshold = {{ check.healthy_threshold }}
+        unhealthy_threshold = {{ check.unhealthy_threshold }}
+        timeout = {{ check.timeout }} 
+        target = "{{ check.target }}"
+        interval = {{ check.interval }}
+    }
+    {% endfor %}
+
+
+    tags = {
+    {%- for tag in tags.keys() %}
+        {{ tag }} = "{{ tags[tag] }}"
+    {%- endfor %}
+    }
+
+}
+
+{% endif %}
+
+
+
 output "{{ cluster_name }}" {
     value = ["${aws_instance.spawn_instance_{{ cluster_name }}.*.private_ip}"]
 }
