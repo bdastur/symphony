@@ -98,6 +98,8 @@ tf_accesskey*
 symphony_accesskey*
 .logs/*
 *teststaging*
+*.tfstate
+*.tfstate.backup
 
 
 services/consul/roles/franklinkim.nginx/
