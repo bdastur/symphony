@@ -5,7 +5,85 @@
 Handle Terraforrm operations
 '''
 import os
+import sys
+import asyncio
+import subprocess
 import utils.symphony_logger as logger
+
+class Command(object):
+    '''
+    Command Handlerself
+    '''
+    def __init__(self):
+        self.slog = logger.Logger(name="Command")
+
+    def execute_cmd(self, cmd, options={}, popen=False):
+        cwd = options.get('cwd', None)
+        env = options.get('env', None)
+        if popen:
+            cmdoutput = ""
+            sproc = subprocess.Popen(cmd,
+                                     env=env,
+                                     cwd=cwd,
+                                     shell=True,
+                                     stdout=subprocess.PIPE)
+            while True:
+                nextline = sproc.stdout.readline()
+                nextline = nextline.decode("utf-8")
+                cmdoutput += nextline
+                if nextline == '' and sproc.poll() is not None:
+                    break
+
+                sys.stdout.write(nextline)
+                sys.stdout.flush()
+
+            return 0, cmdoutput
+
+        try:
+            cmdoutput = subprocess.check_output(cmd,
+                                                cwd=cwd,
+                                                shell=True,
+                                                env=env)
+        except subprocess.CalledProcessError as err:
+            self.slog.logger.error("Failed to execut %s. Err %s",
+                                   cmd, err)
+            return 1, ""
+
+        return 0, cmdoutput
+
+    def execute(self, cmd, options={}):
+        '''Execute command'''
+        cwd = options.get('cwd', None)
+        sproc = subprocess.Popen(cmd,
+            cwd=cwd,
+            stdout=subprocess.PIPE,
+            close_fds=True)
+        while True:
+            next_line = sproc.stdout.readline()
+            next_line = next_line.decode("utf-8")
+            if next_line == "" and sproc.poll() is not None:
+                break
+
+            sys.stdout.write(next_line)
+            sys.stdout.flush()
+
+        print(sproc.errors)
+        sys.stdout.close()
+
+    def execute_run(self, cmd, options={}):
+        ''' Execute command'''
+        cwd = options.get('cwd', None)
+        proc = subprocess.run(cmd, cwd=cwd, capture_output=True)
+        #proc.check_returncode()
+        print(proc.stdout)
+        print("Retturn code: ", proc.returncode)
+
+    def execute_command_async(self, cmd, options={}):
+        ''' Execute command asynchronously'''
+
+
+
+
 
 class Terraform(object):
     '''
@@ -13,6 +91,7 @@ class Terraform(object):
     '''
     def __init__(self, tf_staging_dir, slogger=None):
         print("Terraform class init")
+        self.initialized = False
         if slogger is None:
             self.slog = logger.Logger(name="Terraform")
         else:
@@ -21,11 +100,19 @@ class Terraform(object):
         if tf_staging_dir is None:
             self.slog.logger.error("Terraform staging path cannot be none")
             return
-        if not os.path.exists(tf_staging_dir) and not os.path.isdir(tf_staging_dir):
+        if not os.path.exists(tf_staging_dir) and \
+            not os.path.isdir(tf_staging_dir):
             self.slog.logger.error("Staging dir %s, should be a dir", tf_staging_dir)
             return
+        self.initialized = True
 
         self.slog.logger.info("Terraform module init!")
+
+    def terraform_init(self, **kwargs):
+        ''' Handle Terraform init '''
+        print("Terraform init: ", kwargs)
+
+
 
 
 
