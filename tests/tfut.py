@@ -20,7 +20,8 @@ class TfUt(unittest.TestCase):
         tf_test_dir = "./testdata/tfdir"
         staging_dir = "/tmp/symphdist"
         # Set staging with sample terraform template
-        shutil.rmtree(staging_dir)
+        if os.path.exists(staging_dir):
+            shutil.rmtree(staging_dir)
         shutil.copytree(tf_test_dir, staging_dir)
 
         # Copy sample scripts to /tmp
