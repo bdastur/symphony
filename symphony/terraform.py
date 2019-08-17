@@ -42,8 +42,10 @@ class Command(object):
         try:
             cmdoutput = subprocess.check_output(cmd,
                                                 cwd=cwd,
-                                                shell=True,
+                                                stderr=subprocess.STDOUT,
+                                                shell=False,
                                                 env=env)
+
         except subprocess.CalledProcessError as err:
             self.slog.logger.error("Failed to execut %s. Err %s",
                                    cmd, err)
@@ -73,15 +75,21 @@ class Command(object):
     def execute_run(self, cmd, options={}):
         ''' Execute command'''
         cwd = options.get('cwd', None)
-        proc = subprocess.run(cmd, cwd=cwd, capture_output=True)
-        #proc.check_returncode()
-        print(proc.stdout)
-        print("Retturn code: ", proc.returncode)
-
-    def execute_command_async(self, cmd, options={}):
-        ''' Execute command asynchronously'''
-
-
+        env = options.get('env', None)
+        self.slog.logger.debug("CMD: %s, option: %s",
+            cmd, options)
+        try:
+            proc = subprocess.run(
+                cmd,
+                env=env, cwd=cwd,
+                capture_output=True)
+            stdout = proc.stdout.decode("utf-8")
+            stderr = proc.stderr.decode("utf-8")
+            return proc.returncode, stdout, stderr
+        except FileNotFoundError as err:
+            self.slog.logger.error("CMD: %s not found %s",
+            cmd, err)
+            return err.errno, "", err.__str__()
 
 
 
