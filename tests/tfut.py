@@ -30,7 +30,7 @@ class TfUt(unittest.TestCase):
             "./testdata/sample_fail.sh": "/tmp/sample_fail.sh"
         }
         for script in scripts.keys():
-            print("Copy %s", script)
+            print("Copying %s", script)
             shutil.copy(script, scripts[script])
 
 
@@ -50,7 +50,8 @@ class TfUt(unittest.TestCase):
         tfut = terraform.Terraform(TfUt.TF_STAGING_DIR)
         self.assertEqual(tfut.initialized, True)
 
-        tfut.terraform_init(tf_dir="/tmp/test")
+        ret, _, _ = tfut.terraform_init(TfUt.TF_STAGING_DIR, tf_dir="/tmp/test")
+        self.assertEqual(ret, 0, msg="Expected return 0")
 
 
 class CommandUt(unittest.TestCase):
@@ -87,12 +88,10 @@ class CommandUt(unittest.TestCase):
         ret, out, err = cmdobj.execute_run(["/tmp/sample_pass.sh"])
         self.assertTrue(ret == 0, msg="Expected 0 ")
 
-        cmdoptions = {}
-        cmdoptions['cwd'] = "/tmp"
-        ret, out, err = cmdobj.execute_run(["ls", "-l"], options=cmdoptions)
+        ret, out, err = cmdobj.execute_run(["ls", "-l"], cwd="/tmp")
         self.assertEqual(ret, 0, msg="Expected value not returned")
 
-        ret, out, err = cmdobj.execute_run(["./sample_fail.sh"], options=cmdoptions)
+        ret, out, err = cmdobj.execute_run(["./sample_fail.sh"], cwd="/tmp")
         self.assertEqual(ret, 255, msg="Expected value not returned")
 
         ret, out, err = cmdobj.execute_run(["foobar"])
