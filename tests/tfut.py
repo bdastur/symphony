@@ -50,8 +50,19 @@ class TfUt(unittest.TestCase):
         tfut = terraform.Terraform(TfUt.TF_STAGING_DIR)
         self.assertEqual(tfut.initialized, True)
 
-        ret, _, _ = tfut.terraform_init(TfUt.TF_STAGING_DIR, tf_dir="/tmp/test")
+        ret, _, _ = tfut.terraform_init(TfUt.TF_STAGING_DIR,
+            tf_dir="/tmp/test")
         self.assertEqual(ret, 0, msg="Expected return 0")
+
+    def test_terraform_init_fail(self):
+        ''' test terraform_init '''
+        tfut = terraform.Terraform(TfUt.TF_STAGING_DIR)
+        self.assertEqual(tfut.initialized, True)
+
+        ret, _, _ = tfut.terraform_init(TfUt.TF_STAGING_DIR,
+            tf_dir="/tmp/test", get_plugins=False)
+        self.assertEqual(ret, 1, msg="Expected return 1")
+
 
 
 class CommandUt(unittest.TestCase):
