@@ -9,7 +9,9 @@ import shutil
 import os
 import unittest
 import sys
+import symphony.command as command
 import symphony.terraform as terraform
+
 
 class TfUt(unittest.TestCase):
     '''Test Terraform operations'''
