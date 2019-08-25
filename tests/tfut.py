@@ -52,7 +52,7 @@ class TfUt(unittest.TestCase):
         tfut = terraform.Terraform(TfUt.TF_STAGING_DIR)
         self.assertEqual(tfut.initialized, True)
 
-        ret, _, _ = tfut.terraform_init(TfUt.TF_STAGING_DIR,
+        ret, stdout, stderr = tfut.terraform_init(TfUt.TF_STAGING_DIR,
             tf_dir="/tmp/test")
         self.assertEqual(ret, 0, msg="Expected return 0")
 
@@ -65,6 +65,22 @@ class TfUt(unittest.TestCase):
             tf_dir="/tmp/test", get_plugins=False)
         self.assertEqual(ret, 1, msg="Expected return 1")
 
+    def test_terraform_plan(self):
+        ''' test terraform_plan '''
+        tfut = terraform.Terraform(TfUt.TF_STAGING_DIR)
+        self.assertEqual(tfut.initialized, True)
+
+        # Terraform init
+        ret, stdout, stderr = tfut.terraform_init(TfUt.TF_STAGING_DIR,
+            tf_dir="/tmp/test")
+        self.assertEqual(ret, 0, msg="Expected return 0")
+
+        # Terraform plan
+        ret, stdout, stderr = tfut.terraform_plan(TfUt.TF_STAGING_DIR,
+            tf_dir="/tmp/test")
+        self.assertEqual(ret, 0, msg="Expected return 0")
+        print("stdout: ", stdout)
+        print("stderr: ", stderr)
 
 
 class CommandUt(unittest.TestCase):
@@ -82,7 +98,7 @@ class CommandUt(unittest.TestCase):
 
     def test_command_execute(self):
         '''command run test '''
-        cmdobj = terraform.Command()
+        cmdobj = command.Command()
         ret, out = cmdobj.execute_cmd("/tmp/sample_fail.sh")
         self.assertEqual(ret, 1)
         print(out)
@@ -97,7 +113,7 @@ class CommandUt(unittest.TestCase):
 
     def test_command_run(self):
         '''Command run test'''
-        cmdobj = terraform.Command()
+        cmdobj = command.Command()
         ret, out, err = cmdobj.execute_run(["/tmp/sample_pass.sh"])
         self.assertTrue(ret == 0, msg="Expected 0 ")
 
