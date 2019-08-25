@@ -14,8 +14,10 @@ variable "region" {
 
 variable "create_vpc" {
   type = "string"
+  default = "true"
 }
 
 variable "enable_network_acl" {
   type = "string"
+  default = "true"
 }
