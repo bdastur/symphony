@@ -38,10 +38,12 @@ class Terraform(object):
 
     def generate_terraform_command(self, operation, **kwargs):
         '''Build a command string'''
-        command =["terraform", operation]
+        command = ["terraform", operation]
         get_plugins = kwargs.get("get_plugins", True)
         lock = kwargs.get("lock", True)
         var_file = kwargs.get("var_file", None)
+        auto_approve = kwargs.get("auto_approve", True)
+
 
         if operation == "init":
             if not get_plugins:
@@ -49,6 +51,12 @@ class Terraform(object):
             if not lock:
                 command.append("-lock=false")
         elif operation == "plan":
+            if var_file is not None:
+                cmdoption = "-var-file=%s" % var_file
+                command.append(cmdoption)
+        elif operation == "apply":
+            if auto_approve:
+                command.append("-auto-approve")
             if var_file is not None:
                 cmdoption = "-var-file=%s" % var_file
                 command.append(cmdoption)
@@ -76,6 +84,13 @@ class Terraform(object):
 
         return ret, stdout, stderr
 
+    def terraform_apply(self, staging_dir, **kwargs):
+        '''Handling terraform apply command'''
+        self.slog.logger.info("Executing terraform apply")
+        apply_cmd = self.generate_terraform_command("apply", **kwargs)
+        print("apply cmd: ", apply_cmd)
+        ret, stdout, stderr = self.cmdobj.execute_run(apply_cmd, cwd=staging_dir)
+        if ret != 0:
+            self.slog.logger.error("apply %s failed", apply_cmd)
 
-
-
+        return ret, stdout, stderr

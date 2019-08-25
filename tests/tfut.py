@@ -82,6 +82,31 @@ class TfUt(unittest.TestCase):
         print("stdout: ", stdout)
         print("stderr: ", stderr)
 
+    def test_terraform_apply(self):
+        ''' test terraform_apply '''
+        tfut = terraform.Terraform(TfUt.TF_STAGING_DIR)
+        self.assertEqual(tfut.initialized, True)
+
+        # Terraform init
+        ret, stdout, stderr = tfut.terraform_init(TfUt.TF_STAGING_DIR,
+            tf_dir="/tmp/test")
+        self.assertEqual(ret, 0, msg="Expected return 0")
+
+        # Terraform plan
+        ret, stdout, stderr = tfut.terraform_plan(TfUt.TF_STAGING_DIR,
+            tf_dir="/tmp/test")
+        self.assertEqual(ret, 0, msg="Expected return 0")
+        print("stdout: ", stdout)
+        print("stderr: ", stderr)
+
+         # Terraform apply
+        ret, stdout, stderr = tfut.terraform_apply(TfUt.TF_STAGING_DIR,
+            tf_dir="/tmp/test")
+        self.assertEqual(ret, 0, msg="Expected return 0")
+        print("stdout: ", stdout)
+        print("stderr: ", stderr)
+
+
 
 class CommandUt(unittest.TestCase):
     '''Test Command class'''
