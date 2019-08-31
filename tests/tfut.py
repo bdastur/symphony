@@ -11,6 +11,7 @@ import unittest
 import sys
 import symphony.command as command
 import symphony.terraform as terraform
+import symphony.renderer as renderer
 
 
 class TfUt(unittest.TestCase):
@@ -35,6 +36,10 @@ class TfUt(unittest.TestCase):
             print("Copying %s", script)
             shutil.copy(script, scripts[script])
 
+    def normalize_string(self, string):
+        newstr = string.replace(" ", "")
+        newstr = newstr.replace("\n", "")
+        return newstr
 
     def test_terraform_module_init(self):
         invalid_staging = "/tmp/nonexistent"
@@ -105,6 +110,32 @@ class TfUt(unittest.TestCase):
         self.assertEqual(ret, 0, msg="Expected return 0")
         print("stdout: ", stdout)
         print("stderr: ", stderr)
+
+    def test_render_j2basic(self):
+        pass
+        template = "templates/aws/provider.tf.j2"
+        searchpath = "../"
+        expected_output = '''
+        #------------------------------------
+        # AWS Provider definition
+
+        provider "aws" {
+          region = "us-west-2"
+          shared_credentials_file = "/Users/home"
+          profile = ""
+        }
+
+        '''
+        expected_output = self.normalize_string(expected_output)
+        obj = {
+            'region': 'us-west-2',
+            'profile': 'default',
+            'credentials_file': "/Users/home"
+        }
+        rendered_data = renderer.render_j2_template(template, searchpath, obj)
+        rendered_data = self.normalize_string(rendered_data)
+        self.assertEqual(expected_output, rendered_data,
+                         msg="Expected did not match actual")
 
 
 
