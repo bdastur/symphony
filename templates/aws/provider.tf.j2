@@ -1,0 +1,9 @@
+#------------------------------------
+# AWS Provider definition
+
+provider "aws" {
+    region = "{{ region }}"
+    shared_credentials_file = "{{ credentials_file }}"
+    profile = "{{ profile_name }}" 
+}
+
